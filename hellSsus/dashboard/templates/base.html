@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HellSsus Security Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="HellSsus" class="logo">
+            <div class="nav-links">
+                {% if session.user_id %}
+                <span class="username">Hola, {{ session.username }}</span>
+                <a href="/logout" class="btn-logout">Logout</a>
+                {% else %}
+                <a href="/login" class="btn-login">Login</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+    <div class="header">
+        <h1>🔍 Asset Details</h1>
+        <div class="nav">
+            <a href="/assets" class="btn">← Back to Assets</a>
+            <a href="/projects" class="btn">← Projects</a>
+        </div>
+    </div>
+
+    <!-- Basic Asset Info -->
+    <div class="asset-info">
+        <h3>Basic Information</h3>
+        <div class="info-grid">
+            <div><strong>URL:</strong> {{ asset.url }}</div>
+            <div><strong>Project:</strong> {{ project_name }}</div>
+            <div><strong>Discovered:</strong> {{ asset.fecha_descubrimiento }}</div>
+            {% if asset.tecnologias %}
+            <div><strong>Technologies:</strong> {{ asset.tecnologias }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Endpoints Section -->
+    <div class="endpoints-section">
+        <h3>Discovered Endpoints ({{ endpoints|length }})</h3>
+        <div class="endpoints-list">
+            {% for endpoint in endpoints %}
+            <div class="endpoint-item">
+                <div class="endpoint-method">{{ endpoint.metodo or 'GET' }}</div>
+                <div class="endpoint-path">{{ endpoint.ruta }}</div>
+                <div class="endpoint-status status-{{ endpoint.codigo_estado // 100 }}x">
+                    {{ endpoint.codigo_estado or 'N/A' }}
+                </div>
+                <div class="endpoint-length">{{ endpoint.longitud_respuesta or 'N/A' }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Technologies Section -->
+    {% if technologies %}
+    <div class="section">
+        <h3>🛠️ Technologies Detected ({{ technologies|length }})</h3>
+        <div class="technologies-list">
+            {% for tech in technologies %}
+            <div class="tech-item">
+                <div class="tech-header">
+                    <strong>{{ tech.name }}</strong> 
+                    <span class="tech-version">{{ tech.version or 'N/A' }}</span>
+                    <span class="tech-type">{{ tech.type }}</span>
+                    <span class="tech-confidence">{{ tech.confidence }}</span>
+                </div>
+                {% if tech.vulnerabilities %}
+                <div class="tech-vulns">
+                    <strong>Vulnerabilities:</strong>
+                    {% for cve in tech.vulnerabilities %}
+                    <span class="cve-badge">{{ cve }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="tech-source">Source: {{ tech.source }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Secrets Section -->
+    {% if secrets %}
+    <div class="section">
+        <h3>🔑 Secrets Found ({{ secrets|length }})</h3>
+        <div class="secrets-list">
+            {% for secret in secrets %}
+            <div class="secret-item">
+                <div class="secret-type">{{ secret.tipo }}</div>
+                <div class="secret-location">{{ secret.ubicacion }}</div>
+                <div class="secret-confidence">Confidence: {{ secret.confianza }}%</div>
+                {% if secret.redactado %}
+                <div class="secret-value">{{ secret.redactado }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    background: var(--blanco);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--azul-oscuro);
+}
+
+.endpoints-section {
+    margin-top: 30px;
+}
+
+.endpoints-list {
+    background: var(--blanco);
+    border-radius: 8px;
+    border: 1px solid var(--azul-oscuro);
+}
+
+.endpoint-item {
+    display: grid;
+    grid-template-columns: 80px 1fr 80px 100px;
+    gap: 15px;
+    padding: 12px 15px;
+    border-bottom: 1px solid #e2e8f0;
+    align-items: center;
+}
+
+.endpoint-item:last-child {
+    border-bottom: none;
+}
+
+.endpoint-method {
+    background: var(--azul-oscuro);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.8em;
+}
+
+.endpoint-path {
+    font-family: monospace;
+    word-break: break-all;
+}
+
+.endpoint-status {
+    text-align: center;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.section {
+    margin-top: 30px;
+}
+
+.technologies-list, .ports-list, .secrets-list {
+    background: var(--blanco);
+    border-radius: 8px;
+    border: 1px solid var(--azul-oscuro);
+}
+
+.tech-item, .port-item, .secret-item {
+    padding: 15px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.tech-item:last-child, .port-item:last-child, .secret-item:last-child {
+    border-bottom: none;
+}
+
+.tech-header {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.tech-version, .tech-type, .tech-confidence {
+    background: #e2e8f0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
+.tech-vulns {
+    margin: 8px 0;
+}
+
+.cve-badge {
+    background: #fed7d7;
+    color: #c53030;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin-right: 5px;
+    font-family: monospace;
+}
+
+.secret-type {
+    background: var(--azul-oscuro);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.secret-location {
+    font-family: monospace;
+    margin: 5px 0;
+}
+
+.secret-confidence {
+    color: #4a5568;
+    font-size: 0.9em;
+}
+
+.secret-value {
+    background: #f7fafc;
+    padding: 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    margin-top: 5px;
+    border: 1px solid #e2e8f0;
+}
+
+.status-2xx { background: #c6f6d5; color: #22543d; }
+.status-3xx { background: #fed7d7; color: #742a2a; }
+.status-4xx { background: #feebcb; color: #744210; }
+.status-5xx { background: #fed7d7; color: #742a2a; }
+</style>
+{% endblock %}

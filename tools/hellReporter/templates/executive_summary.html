@@ -1,0 +1,33 @@
+{% extends "base_report.html" %}
+
+{% block content %}
+<div class="executive-summary">
+    <h3>📊 Executive Summary</h3>
+    
+    <div class="risk-overview">
+        <h4>Risk Assessment</h4>
+        <div class="risk-matrix">
+            <!-- Fila de Impacto -->
+            <div class="matrix-cell" style="background: #fed7d7;">Critical: {{ severity_counts.critical }}</div>
+            <div class="matrix-cell" style="background: #feebc8;">High: {{ severity_counts.high }}</div>
+            <div class="matrix-cell" style="background: #fefcbf;">Medium: {{ severity_counts.medium }}</div>
+            <div class="matrix-cell" style="background: #c6f6d5;">Low: {{ severity_counts.low }}</div>
+            <div class="matrix-cell" style="background: #e9d8fd;">Total: {{ severity_counts.total }}</div>
+        </div>
+    </div>
+    
+    <div class="key-findings">
+        <h4>🔍 Key Findings</h4>
+        <ul>
+            {% for vuln in critical_vulns %}
+            <li><strong>{{ vuln.type }}</strong> - {{ vuln.description[:100] }}...</li>
+            {% endfor %}
+        </ul>
+    </div>
+    
+    <div class="recommendations">
+        <h4>🚀 Immediate Actions</h4>
+        <p>Address critical and high severity vulnerabilities within 48 hours to mitigate significant risks.</p>
+    </div>
+</div>
+{% endblock %}

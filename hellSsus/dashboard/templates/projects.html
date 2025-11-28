@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Projects - HellSsus Dashboard</title>
+    <meta charset="utf-8">
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="header">
+        <h1>🚀 HellSsus Projects</h1>
+        <div class="nav">
+            <a href="/" class="btn">← Back to Dashboard</a>
+        </div>
+    </div>
+
+    <div class="project-list">
+        <h3>All Projects ({{ projects|length }})</h3>
+        {% for project in projects %}
+        <div class="project-item">
+            <div>
+                <strong>{{ project.nombre }}</strong>
+                <br><small>Created: {{ project.fecha_creacion }}</small>
+                <br><small>ID: {{ project.id }} | Status: {{ project.estado }}</small>
+            </div>
+            <div>
+                <a href="/assets?project={{ project.id }}" class="btn">View Assets</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 HellSsus Projects</h1>
+            <a href="/" class="btn">← Back to Dashboard</a>
+        </div>
+
+        <div class="project-list">
+            <h3>All Projects ({{ projects|length }})</h3>
+            {% for project in projects %}
+            <div class="project-item">
+                <div>
+                    <strong>{{ project.nombre }}</strong>
+                    <br><small>Created: {{ project.fecha_creacion }}</small>
+                    <br><small>ID: {{ project.id }} | Status: {{ project.estado }}</small>
+                </div>
+                <div>
+                    <a href="/assets?project={{ project.id }}" class="btn">View Assets</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

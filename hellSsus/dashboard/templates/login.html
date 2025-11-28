@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="login-wrapper">
+    <div class="login-container">
+        <div class="login-header">
+            <h2>🔐 HellSsus Security Platform</h2>
+            <p>Acceso restringido al personal autorizado</p>
+        </div>
+
+        <form method="POST" class="login-form">
+            {% if error %}
+            <div class="alert alert-error">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="username">Usuario:</label>
+                <input type="text" id="username" name="username" maxlength="50" required 
+                       placeholder="Tu usuario">
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña:</label>
+                <input type="password" id="password" name="password" maxlength="100" required 
+                       placeholder="Tu contraseña">
+            </div>
+
+            <button type="submit" class="btn-login-submit">Acceder al Dashboard</button>
+        </form>
+
+        <div class="login-footer">
+            <small>Si tienes problemas para acceder, contacta con el administrador</small>
+        </div>
+    </div>
+</div>
+{% endblock %}
