@@ -1,0 +1,36 @@
+<!-- templates/endpoints.html -->
+{% extends "base_table.html" %}
+
+{% block table_content %}
+<thead>
+    <tr>
+        <th>Method</th>
+        <th>Path</th>
+        <th>Status</th>
+        <th>Project</th>
+        <th>Asset URL</th>
+        <th>Actions</th>
+    </tr>
+</thead>
+<tbody>
+    {% for endpoint in endpoints %}
+    <tr>
+        <td><span class="http-method http-{{ endpoint.method.lower() }}">{{ endpoint.method }}</span></td>
+        <td class="url-cell">{{ endpoint.path }}</td>
+        <td><span class="status-code status-{{ endpoint.status_code // 100 }}xx">{{ endpoint.status_code }}</span></td>
+        <td>{{ endpoint.project_name or 'N/A' }}</td>
+        <td class="url-cell">{{ endpoint.asset_url or 'N/A' }}</td>
+        <td>
+            <a href="/asset/{{ endpoint.asset_id }}" class="btn btn-small">View Asset</a>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
+{% endblock %}
+
+{% block pagination %}
+<!-- Simple pagination for now -->
+<div class="pagination-controls">
+    <span>Showing {{ endpoints|length }} endpoints</span>
+</div>
+{% endblock %}

@@ -1,53 +1,45 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>🚀 HellSsus Dashboard</title>
-    <meta charset="utf-8">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🚀 HellSsus Dashboard</h1>
-            <p>Unified Security Assessment Platform</p>
-        </div>
+{% extends "base.html" %}
 
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-number">{{ projects_count }}</div>
-                <div>Projects</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">{{ assets_count }}</div>
-                <div>Assets</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">{{ secrets_count }}</div>
-                <div>Secrets Found</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">{{ vulnerabilities_count }}</div>
-                <div>Vulnerabilities</div>
-            </div>
-        </div>
+{% block content %}
+<div class="dashboard-container">
+    <div class="header">
+        <h1>🚀 HellSsus Dashboard</h1>
+        <p>Unified Security Assessment Platform</p>
+    </div>
 
-        <div class="nav">
-            <a href="/projects" class="btn">📁 View Projects</a>
-            <a href="/assets" class="btn">🔍 View Assets</a>
-            <a href="/vulnerabilities" class="btn">⚠️ View Vulnerabilities</a>
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-number">{{ projects_count }}</div>
+            <div class="stat-label">Projects</div>
         </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ assets_count }}</div>
+            <div class="stat-label">Assets</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ endpoints_count }}</div>
+            <div class="stat-label">Endpoints Found</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ vulnerabilities_count }}</div>
+            <div class="stat-label">Vulnerabilities</div>
+        </div>
+    </div>
 
-        <div class="recent-projects">
-            <h3>Recent Projects</h3>
-            {% for project in recent_projects %}
-            <div class="project-item">
+    <!-- Recent Projects -->
+    <div class="recent-projects">
+        <h3>Recent Projects</h3>
+        {% for project in recent_projects %}
+        <div class="project-item">
+            <div>
                 <strong>{{ project.name }}</strong>
                 <br><small>Created: {{ project.created_date[:16] if project.created_date else 'N/A' }}</small>
             </div>
-            {% else %}
-            <div class="no-data">No projects found</div>
-            {% endfor %}
+            <div>
+                <a href="/assets?project={{ project.id }}" class="btn">View Assets</a>
+            </div>
         </div>
+        {% endfor %}
     </div>
-</body>
-</html>
+</div>
+{% endblock %}

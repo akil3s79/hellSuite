@@ -5,21 +5,70 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="HellSsus" class="logo">
-            <div class="nav-links">
+    <!-- Sidebar with logo -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-content">
+            <!-- Logo in the sidebar -->
+            <div class="sidebar-header">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="HellSsus" class="sidebar-logo">
+                <h3>🚀 Navigation</h3>
+            </div>
+            <div class="sidebar-links">
+                <a href="/" class="sidebar-link {% if request.path == '/' %}active{% endif %}">
+                    📊 Dashboard
+                </a>
+                <a href="/projects" class="sidebar-link {% if request.path == '/projects' %}active{% endif %}">
+                    📁 Projects
+                </a>
+                <a href="/assets" class="sidebar-link {% if request.path == '/assets' %}active{% endif %}">
+                    🔍 Assets
+                </a>
+                <a href="/endpoints" class="sidebar-link {% if request.path == '/endpoints' %}active{% endif %}">
+                    🔗 Endpoints
+                </a>
+                <a href="/vulnerabilities" class="sidebar-link {% if request.path == '/vulnerabilities' %}active{% endif %}">
+                    ⚠️ Vulnerabilities
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Simple top bar -->
+        <div class="top-bar">
+            <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
+            <div class="top-bar-user">
                 {% if session.user_id %}
-                <span class="username">Hola, {{ session.username }}</span>
+                <span class="username">Hello, {{ session.username }}</span>
                 <a href="/logout" class="btn-logout">Logout</a>
                 {% else %}
                 <a href="/login" class="btn-login">Login</a>
                 {% endif %}
             </div>
         </div>
-    </nav>
-    <div class="content">
-        {% block content %}{% endblock %}
+
+        <!-- Content -->
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
     </div>
+
+    <script>
+        // Sidebar always visible by default
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        
+        // Initialize visible sidebar
+        sidebar.classList.add('active');
+        mainContent.classList.add('sidebar-active');
+
+        // Toggle sidebar
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            mainContent.classList.toggle('sidebar-active');
+        });
+    </script>
 </body>
 </html>

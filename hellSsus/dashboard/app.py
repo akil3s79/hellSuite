@@ -90,7 +90,7 @@ def index():
     projects_count = conn.execute('SELECT COUNT(*) FROM projects').fetchone()[0]
     assets_count = conn.execute('SELECT COUNT(*) FROM assets').fetchone()[0]
     vulnerabilities_count = conn.execute('SELECT COUNT(*) FROM vulnerabilities').fetchone()[0]
-    secrets_count = conn.execute('SELECT COUNT(*) FROM endpoints').fetchone()[0]
+    endpoints_count = conn.execute('SELECT COUNT(*) FROM endpoints').fetchone()[0]
     
     recent_projects = conn.execute(
         'SELECT id, name, created_date FROM projects ORDER BY created_date DESC LIMIT 5'
@@ -101,7 +101,7 @@ def index():
     return render_template('index.html', 
                          projects_count=projects_count,
                          assets_count=assets_count, 
-                         secrets_count=secrets_count,
+                         endpoints_count=endpoints_count, 
                          vulnerabilities_count=vulnerabilities_count,
                          recent_projects=recent_projects)
 
@@ -245,7 +245,7 @@ def api_stats():
     stats = {
         'projects': conn.execute('SELECT COUNT(*) FROM projects').fetchone()[0],
         'assets': conn.execute('SELECT COUNT(*) FROM assets').fetchone()[0],
-        'secrets': conn.execute('SELECT COUNT(*) FROM endpoints').fetchone()[0],
+        'endpoints': conn.execute('SELECT COUNT(*) FROM endpoints').fetchone()[0],
         'vulnerabilities': conn.execute('SELECT COUNT(*) FROM vulnerabilities').fetchone()[0]
     }
     
@@ -397,6 +397,37 @@ def export_pdf(project_id):
     except Exception as e:
         print(f"[!] PDF export error: {e}")
         return "Error generating PDF", 500
+
+# Add this to your app.py after the other routes
+
+@app.route('/endpoints')
+def endpoints():
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = get_db_connection()
+    
+    endpoints_data = conn.execute('''
+        SELECT 
+            e.id,
+            e.method,
+            e.path,
+            e.status_code,
+            e.asset_id,
+            a.url as asset_url,
+            p.name as project_name
+        FROM endpoints e
+        LEFT JOIN assets a ON e.asset_id = a.id
+        LEFT JOIN projects p ON a.project_id = p.id
+        ORDER BY e.id DESC
+    ''').fetchall()
+    
+    conn.close()
+    
+    return render_template('endpoints.html',
+                         endpoints=endpoints_data,
+                         page_title='🚀 Endpoints Management',
+                         stats_summary=f'Found {len(endpoints_data)} endpoints across all projects')
 
 def generate_pdf_html(project_id):
     """Generate PROFESSIONAL PDF report"""

@@ -6,6 +6,7 @@
     <div class="header">
         <h1>🔍 Asset Details</h1>
         <div class="nav">
+            <a href="/" class="btn">← Back to Dashboard</a>
             <a href="/assets" class="btn">← Back to Assets</a>
             <a href="/projects" class="btn">← Projects</a>
         </div>
@@ -17,7 +18,13 @@
         <div class="info-grid">
             <div><strong>URL:</strong> {{ asset.url }}</div>
             <div><strong>Project:</strong> {{ project_name }}</div>
-            <div><strong>Discovered:</strong> {{ asset.discovery_date[:16] if asset.discovery_date else 'During scan' }}</div>
+            <div><strong>Discovered:</strong> 
+                {% if asset.discovery_date %}
+                    {{ asset.discovery_date.replace('T', ' ')[:16] }}
+                {% else %}
+                    During scan
+                {% endif %}
+            </div>
             {% if asset.technologies %}
             <div><strong>Technologies:</strong> <em>See detailed list below</em></div>
             {% endif %}
@@ -52,13 +59,23 @@
                     <strong>{{ tech.name }}</strong> 
                     <span class="tech-version">{{ tech.version or 'N/A' }}</span>
                     <span class="tech-type">{{ tech.type }}</span>
-                    <span class="tech-confidence">{{ tech.confidence }}</span>
+                    <span class="confidence-{{ tech.confidence.lower() }}">{{ tech.confidence }}</span>
                 </div>
                 {% if tech.vulnerabilities %}
                 <div class="tech-vulns">
                     <strong>Vulnerabilities:</strong>
                     {% for cve in tech.vulnerabilities %}
-                    <span class="cve-badge">{{ cve }}</span>
+                    {% if 'critical' in cve.lower() %}
+                        <span class="cve-critical">{{ cve }}</span>
+                    {% elif 'high' in cve.lower() %}
+                        <span class="cve-high">{{ cve }}</span>
+                    {% elif 'medium' in cve.lower() %}
+                        <span class="cve-medium">{{ cve }}</span>
+                    {% elif 'low' in cve.lower() %}
+                        <span class="cve-low">{{ cve }}</span>
+                    {% else %}
+                        <span class="cve-info">{{ cve }}</span>
+                    {% endif %}
                     {% endfor %}
                 </div>
                 {% endif %}
@@ -184,8 +201,8 @@
 }
 
 .cve-badge {
-    background: #fed7d7;
-    color: #c53030;
+    background: #A10202;
+    color: #ffffff;
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 0.8em;
@@ -226,5 +243,98 @@
 .status-3xx { background: #fed7d7; color: #742a2a; }
 .status-4xx { background: #feebcb; color: #744210; }
 .status-5xx { background: #fed7d7; color: #742a2a; }
+
+.cve-critical { 
+    background: #A10202; 
+    color: #ffffff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin-right: 5px;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.cve-high { 
+    background: #feb2b2; 
+    color: #c53030;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin-right: 5px;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.cve-medium { 
+    background: #fef5e7; 
+    color: #744210;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin-right: 5px;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.cve-low { 
+    background: #c6f6d5; 
+    color: #22543d;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin-right: 5px;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.cve-info { 
+    background: #ebf8ff; 
+    color: #1a365d;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin-right: 5px;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+/* COLORS FOR CONFIDENCE */
+.confidence-critical { 
+    background: #A10202; 
+    color: #ffffff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.confidence-high { 
+    background: #feb2b2; 
+    color: #c53030;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.confidence-medium { 
+    background: #fef5e7; 
+    color: #744210;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.confidence-low { 
+    background: #c6f6d5; 
+    color: #22543d;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
 </style>
 {% endblock %}
