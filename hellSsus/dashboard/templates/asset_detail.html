@@ -17,9 +17,9 @@
         <div class="info-grid">
             <div><strong>URL:</strong> {{ asset.url }}</div>
             <div><strong>Project:</strong> {{ project_name }}</div>
-            <div><strong>Discovered:</strong> {{ asset.fecha_descubrimiento }}</div>
-            {% if asset.tecnologias %}
-            <div><strong>Technologies:</strong> {{ asset.tecnologias }}</div>
+            <div><strong>Discovered:</strong> {{ asset.discovery_date[:16] if asset.discovery_date else 'During scan' }}</div>
+            {% if asset.technologies %}
+            <div><strong>Technologies:</strong> <em>See detailed list below</em></div>
             {% endif %}
         </div>
     </div>
@@ -30,12 +30,12 @@
         <div class="endpoints-list">
             {% for endpoint in endpoints %}
             <div class="endpoint-item">
-                <div class="endpoint-method">{{ endpoint.metodo or 'GET' }}</div>
-                <div class="endpoint-path">{{ endpoint.ruta }}</div>
-                <div class="endpoint-status status-{{ endpoint.codigo_estado // 100 }}x">
-                    {{ endpoint.codigo_estado or 'N/A' }}
+                <div class="endpoint-method">{{ endpoint.method  or 'GET' }}</div>
+                <div class="endpoint-path">{{ endpoint.path }}</div>
+                <div class="endpoint-status status-{{ endpoint.status_code  // 100 }}x">
+                    {{ endpoint.status_code  or 'N/A' }}
                 </div>
-                <div class="endpoint-length">{{ endpoint.longitud_respuesta or 'N/A' }}</div>
+                <div class="endpoint-length">{{ endpoint.content_length or 'N/A' }}</div>
             </div>
             {% endfor %}
         </div>
@@ -76,11 +76,11 @@
         <div class="secrets-list">
             {% for secret in secrets %}
             <div class="secret-item">
-                <div class="secret-type">{{ secret.tipo }}</div>
-                <div class="secret-location">{{ secret.ubicacion }}</div>
-                <div class="secret-confidence">Confidence: {{ secret.confianza }}%</div>
-                {% if secret.redactado %}
-                <div class="secret-value">{{ secret.redactado }}</div>
+                <div class="secret-type">{{ secret.type }}</div>
+                <div class="secret-location">{{ secret.location  }}</div>
+                <div class="secret-confidence">Confidence: {{ secret.secret.confidence }}%</div>
+                {% if secret.redacted  %}
+                <div class="secret-value">{{ secret.redacted  }}</div>
                 {% endif %}
             </div>
             {% endfor %}

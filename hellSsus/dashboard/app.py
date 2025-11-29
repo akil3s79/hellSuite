@@ -494,4 +494,6 @@ with app.app_context():
 if __name__ == '__main__':
     print("[*] Starting HellSsus Dashboard...")
     print("[*] Access at: http://localhost:5000")
+    print("[*] Default credentials: admin / admin@2025_Nov")
+    print("[!] Change default password in production!")
     app.run(debug=True, host='0.0.0.0', port=5000)

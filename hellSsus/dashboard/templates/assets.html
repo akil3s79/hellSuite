@@ -39,5 +39,106 @@
             </tbody>
         </table>
     </div>
+
+    <div class="actions" style="margin-top: 20px;">
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
 </div>
+
+<style>
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.header-section {
+    background: var(--azul-oscuro);
+    color: var(--blanco);
+    padding: 30px;
+    border-radius: 8px;
+    margin-bottom: 30px;
+}
+
+.header-section h1 {
+    margin: 0;
+    font-size: 2rem;
+    }
+
+.table-container {
+    background: var(--blanco);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.data-table th {
+    background: var(--azul-medio);
+    color: white;
+    padding: 15px;
+    text-align: left;
+    font-weight: 600;
+}
+
+.data-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid var(--gris-claro);
+}
+
+.data-table tr:hover {
+    background: var(--gris-claro);
+}
+
+.url-cell {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary {
+    background: var(--azul-medio);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1a56bb;
+}
+
+.btn-secondary {
+    background: var(--gris-texto);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #2d3748;
+}
+
+.no-data {
+    text-align: center;
+    color: var(--gris-texto);
+    font-style: italic;
+    padding: 40px;
+}
+
+.actions {
+    text-align: center;
+    margin-top: 20px;
+}
+</style>
 {% endblock %}

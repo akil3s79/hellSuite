@@ -87,7 +87,7 @@ def run_hellfuzzer(target, output_file, wordlist="common.txt"):
         print(f"[!] HellFuzzer execution error: {e}")
         return None
 
-def run_hellscanner(target, output_file, project_name):
+def run_hellscanner(target, output_file, project_name, project_id):
     """Run HellScanner and import results"""
     try:
         from config import HELLSCANNER_PATH
@@ -110,25 +110,35 @@ def run_hellscanner(target, output_file, project_name):
             return True
         else:
             print(f"[!] HellScanner failed with code: {result.returncode}")
-            if result.stdout:
-                print(f"[DEBUG] Stdout: '{result.stdout}'")
-            if result.stderr:
-                print(f"[DEBUG] Stderr: '{result.stderr}'")
             return False
             
     except Exception as e:
         print(f"[!] Error running HellScanner: {e}")
         return False
 
-def create_project(project_name):
-    """Create project and return its ID"""
+def get_or_create_project(project_name):
+    """Get existing project or create new one"""
     try:
         from integrations.hellrecon_adapter import HellReconAdapter
         adapter = HellReconAdapter()
-        project_id = adapter.create_project(project_name)
-        return project_id
+        
+        # check if it already exists
+        conn = adapter.connect_db()
+        cursor = conn.cursor()
+        cursor.execute('SELECT id FROM projects WHERE name = ?', (project_name,))
+        existing_project = cursor.fetchone()
+        conn.close()
+        
+        if existing_project:
+            print(f"[*] Using existing project: {project_name} (ID: {existing_project[0]})")
+            return existing_project[0]
+        else:
+            project_id = adapter.create_project(project_name)
+            print(f"[+] Project created: {project_name} (ID: {project_id})")
+            return project_id
+            
     except Exception as e:
-        print(f"[!] Error creating project: {e}")
+        print(f"[!] Error with project: {e}")
         return None
 
 def main():
@@ -143,7 +153,7 @@ def main():
     print(f"[*] Tools: {args.tools}")
     
     # Create project once
-    project_id = create_project(args.project)
+    project_id = get_or_create_project(args.project)
     
     if not project_id:
         print("[!] Failed to create project, exiting")
@@ -181,7 +191,7 @@ def main():
 
     if 'scanner' in args.tools or 'all' in args.tools:
         scanner_output = get_scan_path("hellscanner", args.target)
-        if run_hellscanner(args.target, scanner_output, args.project):
+        if run_hellscanner(args.target, scanner_output, args.project, project_id):
             print(f"[+] HellScanner completed")
             print("[+] HellScanner data imported to database")
         else:

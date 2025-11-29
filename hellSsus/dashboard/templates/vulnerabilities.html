@@ -21,10 +21,10 @@
         
         {% if vulnerabilities %}
         <div class="severity-stats">
-            {% set critical = vulnerabilities|selectattr('severidad', 'equalto', 'critical')|list %}
-            {% set high = vulnerabilities|selectattr('severidad', 'equalto', 'high')|list %}
-            {% set medium = vulnerabilities|selectattr('severidad', 'equalto', 'medium')|list %}
-            {% set low = vulnerabilities|selectattr('severidad', 'equalto', 'low')|list %}
+            {% set critical = vulnerabilities|selectattr('severity', 'equalto', 'critical')|list %}
+            {% set high = vulnerabilities|selectattr('severity', 'equalto', 'high')|list %}
+            {% set medium = vulnerabilities|selectattr('severity', 'equalto', 'medium')|list %}
+            {% set low = vulnerabilities|selectattr('severity', 'equalto', 'low')|list %}
             
             <div class="severity-badges">
                 <span class="severity-critical">Critical: {{ critical|length }}</span>
@@ -35,9 +35,9 @@
         </div>
 
 {% for vuln in vulnerabilities %}
-        <div class="vulnerability-item severity-{{ vuln.severidad }}">
+        <div class="vulnerability-item severity-{{ vuln.severity }}">
             <div class="vuln-header">
-                <span class="vuln-severity">{{ vuln.severidad.upper() }}</span>
+                <span class="vuln-severity">{{ vuln.severity.upper() }}</span>
                 <strong class="vuln-type">{{ vuln.tipo }}</strong>
                 {% if vuln.cve %}
                 <span class="vuln-cve">{{ vuln.cve }}</span>
@@ -52,21 +52,21 @@
                 {% if vuln.asset_url %}
                 <div><strong>Asset:</strong> {{ vuln.asset_url }}</div>
                 {% endif %}
-                {% if vuln.proyecto_nombre %}
-                <div><strong>Project:</strong> {{ vuln.proyecto_nombre }}</div>
+                {% if vuln.project_name %}
+                <div><strong>Project:</strong> {{ vuln.project_name }}</div>
                 {% endif %}
-                <div><strong>Discovered:</strong> {{ vuln.fecha_descubrimiento }}</div>
+                <div><strong>Discovered:</strong> {{ vuln.discovery_date }}</div>
                 
-                {% if vuln.prueba_concepto %}
+                {% if vuln.proof_of_concept %}
                 <div class="vuln-poc">
                     <strong>Proof of Concept:</strong> 
-                    <code>{{ vuln.prueba_concepto }}</code>
+                    <code>{{ vuln.proof_of_concept }}</code>
                 </div>
                 {% endif %}
                 
-                {% if vuln.recomendacion %}
+                {% if vuln.recommendation %}
                 <div class="vuln-recommendation">
-                    <strong>Recommendation:</strong> {{ vuln.recomendacion }}
+                    <strong>Recommendation:</strong> {{ vuln.recommendation }}
                 </div>
                 {% endif %}
             </div>

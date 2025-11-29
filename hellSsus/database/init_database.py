@@ -93,10 +93,12 @@ def init_database():
     ''')
     
     # Insert default admin user (password: admin@2025_Nov)
+    from passlib.hash import pbkdf2_sha256
+    password_hash = pbkdf2_sha256.hash('admin@2025_Nov')
     cursor.execute('''
         INSERT INTO users (username, password_hash) 
-        VALUES ('admin', 'pbkdf2:sha256:260000$K1H5W8zX$dummy_hash_replace_this')
-    ''')
+        VALUES ('admin', ?)
+    ''', (password_hash,))
     
     conn.commit()
     conn.close()
