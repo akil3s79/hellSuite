@@ -1,144 +1,42 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container">
-    <div class="header-section">
-        <h1>Assets</h1>
-        {% if project_name %}
-            <p>Project: <strong>{{ project_name }}</strong></p>
-        {% endif %}
-    </div>
-
-    <div class="table-container">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>URL</th>
-                    <th>Discovery Date</th>
-                    <th>Project</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for asset in assets %}
-                <tr>
-                    <td>{{ asset.id }}</td>
-                    <td class="url-cell">{{ asset.url }}</td>
-                    <td>{{ asset.discovery_date[:16] if asset.discovery_date else 'N/A' }}</td>
-                    <td>{{ asset.project_name if asset.project_name else 'N/A' }}</td>
-                    <td>
-                        <a href="{{ url_for('asset_detail', asset_id=asset.id) }}" class="btn btn-primary">View Details</a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" class="no-data">No assets found</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-
-    <div class="actions" style="margin-top: 20px;">
-        <a href="{{ url_for('index') }}" class="btn">← Back to Dashboard</a>
-    </div>
+<div class="page-header">
+    <h1 class="page-title">Assets</h1>
+    <p>Unified Security Assessment Platform</p>
+    {% if project_name %}
+        <p class="page-subtitle">Project: <strong>{{ project_name }}</strong></p>
+    {% endif %}
 </div>
 
-<style>
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.header-section {
-    background: var(--azul-oscuro);
-    color: var(--blanco);
-    padding: 30px;
-    border-radius: 8px;
-    margin-bottom: 30px;
-}
-
-.header-section h1 {
-    margin: 0;
-    font-size: 2rem;
-    }
-
-.table-container {
-    background: var(--blanco);
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-}
-
-.data-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.data-table th {
-    background: var(--azul-oscuro);
-    color: white;
-    padding: 15px;
-    text-align: left;
-    font-weight: 600;
-}
-
-.data-table td {
-    padding: 12px 15px;
-    border-bottom: 1px solid var(--gris-claro);
-}
-
-.data-table tr:hover {
-    background: var(--gris-claro);
-}
-
-.url-cell {
-    max-width: 300px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    text-decoration: none;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    }
-
-.btn-primary {
-    background: var(--azul-oscuro);
-    color: white;
-}
-
-.btn-primary:hover {
-    background: #1a56bb;
-}
-
-.btn-secondary {
-    background: var(--gris-texto);
-    color: white;
-}
-
-.btn-secondary:hover {
-    background: #2d3748;
-}
-
-.no-data {
-    text-align: center;
-    color: var(--gris-texto);
-    font-style: italic;
-    padding: 40px;
-}
-
-.actions {
-    text-align: center;
-    margin-top: 20px;
-}
-</style>
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>URL</th>
+                <th>Discovery Date</th>
+                <th>Project</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for asset in assets %}
+            <tr>
+                <td>{{ asset.id }}</td>
+                <td class="url-cell">{{ asset.url }}</td>
+                <td>{{ asset.discovery_date[:16] if asset.discovery_date else 'N/A' }}</td>
+                <td>{{ asset.project_name if asset.project_name else 'N/A' }}</td>
+                <td>
+                    <a href="{{ url_for('asset_detail', asset_id=asset.id) }}" class="btn-view">View Details</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="no-data">No assets found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}

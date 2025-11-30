@@ -1,22 +1,16 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container">
-    <div class="header">
-        <h1>⚠️ HellSsus Vulnerabilities</h1>
-        {% if project_name %}
-        <h3>Project: {{ project_name }}</h3>
-        {% endif %}
-        <div class="nav">
-            <a href="/" class="btn">← Dashboard</a>
-            <a href="/projects" class="btn">← Projects</a>
-            {% if project_id %}
-            <a href="/assets?project={{ project_id }}" class="btn">View Assets</a>
-            {% endif %}
-        </div>
-    </div>
+<div class="page-header">
+    <h1 class="page-title">Vulnerabilities</h1>
+    <p>Unified Security Assessment Platform</p>
+    {% if project_name %}
+    <p class="page-subtitle">Project: {{ project_name }}</p>
+    {% endif %}
+</div>
 
-    <div class="vulnerabilities-list">
+<div class="table-container">
+    <div class="vulnerabilities-content">
         <h3>Vulnerabilities Found ({{ vulnerabilities|length }})</h3>
         
         {% if vulnerabilities %}
@@ -27,17 +21,17 @@
             {% set low = vulnerabilities|selectattr('severity', 'equalto', 'low')|list %}
             
             <div class="severity-badges">
-                <span class="severity-critical">Critical: {{ critical|length }}</span>
-                <span class="severity-high">High: {{ high|length }}</span>
-                <span class="severity-medium">Medium: {{ medium|length }}</span>
-                <span class="severity-low">Low: {{ low|length }}</span>
+                <span class="severity-badge severity-critical">Critical: {{ critical|length }}</span>
+                <span class="severity-badge severity-high">High: {{ high|length }}</span>
+                <span class="severity-badge severity-medium">Medium: {{ medium|length }}</span>
+                <span class="severity-badge severity-low">Low: {{ low|length }}</span>
             </div>
         </div>
 
-{% for vuln in vulnerabilities %}
+        {% for vuln in vulnerabilities %}
         <div class="vulnerability-item severity-{{ vuln.severity }}">
             <div class="vuln-header">
-                <span class="vuln-severity">{{ vuln.severity.upper() }}</span>
+                <span class="vuln-severity severity-{{ vuln.severity }}">{{ vuln.severity.upper() }}</span>
                 <strong class="vuln-type">{{ vuln.tipo }}</strong>
                 {% if vuln.cve %}
                 <span class="vuln-cve">{{ vuln.cve }}</span>
@@ -81,110 +75,4 @@
         {% endif %}
     </div>
 </div>
-
-<style>
-.severity-stats {
-    margin-bottom: 20px;
-    padding: 15px;
-    background: var(--blanco);
-    border-radius: 8px;
-    border: 1px solid var(--azul-oscuro);
-}
-
-.severity-badges {
-    display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-}
-
-/* Severity colors - Industry standard */
-.severity-critical { background: #A10202; color: #ffffff; border-left-color: #c53030; }
-.severity-high { background: #feb2b2; color: #c53030; border-left-color: #e53e3e; }
-.severity-medium { background: #fef5e7; color: #744210; border-left-color: #ed8936; }
-.severity-low { background: #c6f6d5; color: #22543d; border-left-color: #38a169; }
-.severity-info { background: #ebf8ff; color: #1a365d; border-left-color: #3182ce; }
-
-/* Stats badges */
-.severity-critical { background: #A10202; color: #ffffff; }
-.severity-high { background: #feb2b2; color: #c53030; }
-.severity-medium { background: #fef5e7; color: #744210; }
-.severity-low { background: #c6f6d5; color: #22543d; }
-.severity-info { background: #ebf8ff; color: #1a365d; }
-
-.vulnerabilities-list {
-    background: var(--blanco);
-    padding: 20px;
-    border-radius: 8px;
-    border: 1px solid var(--azul-oscuro);
-}
-
-.vulnerability-item {
-    padding: 20px;
-    margin-bottom: 15px;
-    border-radius: 8px;
-    border-left: 5px solid;
-}
-
-.vulnerability-item:last-child {
-    margin-bottom: 0;
-}
-
-.vuln-header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-}
-
-.vuln-severity {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: bold;
-    font-size: 0.8em;
-}
-
-.vuln-type {
-    font-size: 1.1em;
-}
-
-.vuln-cve {
-    background: #e2e8f0;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-family: monospace;
-    font-size: 0.9em;
-}
-
-.vuln-description {
-    margin: 10px 0;
-    line-height: 1.5;
-}
-
-.vuln-details {
-    font-size: 0.9em;
-    color: var(--gris-texto);
-}
-
-.vuln-poc, .vuln-recommendation {
-    margin-top: 8px;
-    padding: 8px;
-    background: #f7fafc;
-    border-radius: 4px;
-    border: 1px solid #e2e8f0;
-}
-
-.vuln-poc code {
-    font-family: monospace;
-    background: #edf2f7;
-    padding: 2px 4px;
-    border-radius: 2px;
-}
-
-.no-vulnerabilities {
-    text-align: center;
-    padding: 40px;
-    color: var(--gris-texto);
-}
-</style>
 {% endblock %}

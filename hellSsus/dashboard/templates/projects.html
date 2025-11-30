@@ -1,28 +1,26 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container">
-    <div class="header">
-        <h1>🚀 HellSsus Projects</h1>
-        <div class="nav">
-            <a href="/" class="btn">← Back to Dashboard</a>
-        </div>
-    </div>
+<div class="page-header">
+    <h1 class="page-title">Projects</h1>
+    <p>Unified Security Assessment Platform</p>
+</div>
 
-    <div class="project-list">
-        <h3>All Projects ({{ projects|length }})</h3>
-        {% for project in projects %}
-        <div class="project-item">
-            <div>
-                <strong>{{ project.name }}</strong>
-                <br><small>Created: {{ project.created_date.replace('T', ' ')[:16] if project.created_date else 'N/A' }}</small>
-                <br><small>ID: {{ project.id }} | Status: Active</small>
-            </div>
-            <div>
-                <a href="/assets?project={{ project.id }}" class="btn">View Assets</a>
+<div class="table-container">
+    {% for project in projects %}
+    <div class="project-item">
+        <div class="project-info">
+            <strong>{{ project.name }}</strong>
+            <div class="project-details">
+                <small>Created: {{ project.created_date[:16] if project.created_date else 'N/A' }}</small>
+                <small>Target URL: {{ project.target_url or 'N/A' }}</small>
+                <small>Description: {{ project.description or 'N/A' }}</small>
             </div>
         </div>
-        {% endfor %}
+        <div class="project-actions">
+            <a href="/assets?project={{ project.id }}" class="btn-view">View Assets</a>
+        </div>
     </div>
+    {% endfor %}
 </div>
 {% endblock %}

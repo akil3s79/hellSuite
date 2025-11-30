@@ -5,13 +5,12 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <!-- Sidebar with logo -->
+
+    <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-content">
-            <!-- Logo in the sidebar -->
             <div class="sidebar-header">
-                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="HellSsus" class="sidebar-logo">
-                <h3>🚀 Navigation</h3>
+                <h3>Menu</h3>
             </div>
             <div class="sidebar-links">
                 <a href="/" class="sidebar-link {% if request.path == '/' %}active{% endif %}">
@@ -33,42 +32,33 @@
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="main-content" id="mainContent">
-        <!-- Simple top bar -->
-        <div class="top-bar">
-            <button class="sidebar-toggle" id="sidebarToggle">☰ Menu</button>
-            <div class="top-bar-user">
-                {% if session.user_id %}
-                <span class="username">Hello, {{ session.username }}</span>
-                <a href="/logout" class="btn-logout">Logout</a>
-                {% else %}
-                <a href="/login" class="btn-login">Login</a>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Content -->
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+    <div class="content-wrapper">
+      <!--   <button class="sidebar-toggle" id="sidebarToggle">☰</button> -->
         <div class="content">
             {% block content %}{% endblock %}
         </div>
     </div>
+</div>
 
     <script>
-        // Sidebar always visible by default
+        // Sidebar siempre visible - comentamos el toggle
+        /*
+        // Sidebar toggle functionality
         const sidebar = document.getElementById('sidebar');
         const mainContent = document.getElementById('mainContent');
         const sidebarToggle = document.getElementById('sidebarToggle');
         
-        // Initialize visible sidebar
+        // Default: sidebar visible
         sidebar.classList.add('active');
         mainContent.classList.add('sidebar-active');
 
-        // Toggle sidebar
         sidebarToggle.addEventListener('click', () => {
             sidebar.classList.toggle('active');
             mainContent.classList.toggle('sidebar-active');
         });
+        */
     </script>
 </body>
 </html>

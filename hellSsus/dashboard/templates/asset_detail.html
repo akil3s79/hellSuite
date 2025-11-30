@@ -2,15 +2,13 @@
 
 {% block content %}
 
-<div class="container">
-    <div class="header">
-        <h1>🔍 Asset Details</h1>
-        <div class="nav">
-            <a href="/" class="btn">← Back to Dashboard</a>
-            <a href="/assets" class="btn">← Back to Assets</a>
-            <a href="/projects" class="btn">← Projects</a>
-        </div>
-    </div>
+<div class="page-header">
+    <h1 class="page-title">Asset Details</h1>
+    <p class="page-subtitle">{{ asset.url }}</p>
+</div>
+
+<div class="table-container">
+    <div class="container">
 
     <!-- Basic Asset Info -->
     <div class="asset-info">

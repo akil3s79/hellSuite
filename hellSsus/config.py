@@ -20,6 +20,7 @@ REPORTS_DIR = os.path.join(SHARED_DATA_DIR, "reports")
 WORDLISTS_DIR = os.path.join(SHARED_DATA_DIR, "wordlists")
 
 # Database
+HELLSSUS_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "hellSsus")
 DATABASE_DIR = os.path.join(HELLSSUS_ROOT, "database")
 DATABASE_PATH = os.path.join(DATABASE_DIR, "hellSsus.db")
 

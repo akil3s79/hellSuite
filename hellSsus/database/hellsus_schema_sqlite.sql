@@ -2,57 +2,60 @@
 -- Simple, file-based database for rapid prototyping
 
 -- PROJECTS table
-CREATE TABLE IF NOT EXISTS proyectos (
+CREATE TABLE IF NOT EXISTS projects (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    nombre TEXT NOT NULL,
-    descripcion TEXT,
-    fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
-    estado TEXT DEFAULT 'activo'
+    name TEXT NOT NULL,
+    description TEXT,
+    created_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    status TEXT DEFAULT 'active'
 );
 
 -- ASSETS table (what HellRecon finds)
-CREATE TABLE IF NOT EXISTS activos (
+CREATE TABLE IF NOT EXISTS assets (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    proyecto_id INTEGER REFERENCES proyectos(id),
+    project_id INTEGER REFERENCES projects(id),
     url TEXT NOT NULL,
     ip TEXT,
-    tecnologias TEXT, -- JSON string
-    puertos_abiertos TEXT, -- JSON string
-    fecha_descubrimiento DATETIME DEFAULT CURRENT_TIMESTAMP
+    technologies TEXT, -- JSON string
+    open_ports TEXT, -- JSON string
+    discovery_date DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- ENDPOINTS table (what HellFuzzer finds)  
 CREATE TABLE IF NOT EXISTS endpoints (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    activo_id INTEGER REFERENCES activos(id),
-    ruta TEXT NOT NULL,
-    codigo_estado INTEGER,
-    metodo TEXT,
-    descubierto_por TEXT, -- 'hellfuzzer' or 'hellrecon'
-    contenido TEXT,
-    fecha_descubrimiento DATETIME DEFAULT CURRENT_TIMESTAMP
+    asset_id INTEGER REFERENCES assets(id),
+    path TEXT NOT NULL,
+    status_code INTEGER,
+    method TEXT,
+    discovered_by TEXT, -- 'hellfuzzer' or 'hellrecon'
+    content TEXT,
+    discovery_date DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- SECRETS table (your new awesome feature)
-CREATE TABLE IF NOT EXISTS secretos (
+-- VULNERABILITIES table (what HellScanner finds)
+CREATE TABLE IF NOT EXISTS vulnerabilities (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    activo_id INTEGER REFERENCES activos(id),
-    tipo TEXT, -- 'aws_key', 'github_token', 'slack_webhook'
-    ubicacion TEXT, -- 'https://target.com/app.js:line_245'
-    confianza INTEGER, -- 1-100
-    verificado BOOLEAN DEFAULT FALSE,
-    redactado TEXT, -- 'AKIA***************'
-    fecha_descubrimiento DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- VULNERABILITIES table (for future HellScanner)
-CREATE TABLE IF NOT EXISTS vulnerabilidades (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    activo_id INTEGER REFERENCES activos(id),
-    tipo TEXT, -- 'sql_injection', 'xss'
+    asset_id INTEGER REFERENCES assets(id),
+    type TEXT, -- 'sql_injection', 'xss', 'missing_headers'
+    severity TEXT, -- 'critical', 'high', 'medium', 'low'
+    title TEXT,
+    description TEXT,
     cve TEXT,
     cvss_score REAL,
-    explotable BOOLEAN DEFAULT FALSE,
-    ubicacion TEXT,
-    fecha_descubrimiento DATETIME DEFAULT CURRENT_TIMESTAMP
+    proof_of_concept TEXT,
+    recommendation TEXT,
+    discovery_date DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+
+-- USERS table for authentication
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_date DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Insert default admin user
+INSERT OR IGNORE INTO users (username, password_hash) 
+VALUES ('admin', 'pbkdf2:sha256:260000$8b6W1tE7Q3j2X9vL$...');

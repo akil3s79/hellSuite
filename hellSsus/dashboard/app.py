@@ -19,8 +19,12 @@ app = Flask(__name__)
 app.secret_key = 'hellsus-super-secret-key-change-in-production'
 
 def get_db_connection():
-    """Get database connection with row factory"""
-    conn = sqlite3.connect(DATABASE_PATH)
+    # Go up one level from the dashboard and enter the database.
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    db_path = os.path.join(base_dir, 'database', 'hellSsus.db')
+    print(f"📁 CONNECTING TO: {db_path}")
+    
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -426,7 +430,7 @@ def endpoints():
     
     return render_template('endpoints.html',
                          endpoints=endpoints_data,
-                         page_title='🚀 Endpoints Management',
+                         page_title='Endpoints Management',
                          stats_summary=f'Found {len(endpoints_data)} endpoints across all projects')
 
 def generate_pdf_html(project_id):

@@ -1,36 +1,83 @@
-<!-- templates/endpoints.html -->
-{% extends "base_table.html" %}
+{% extends "base.html" %}
 
-{% block table_content %}
-<thead>
-    <tr>
-        <th>Method</th>
-        <th>Path</th>
-        <th>Status</th>
-        <th>Project</th>
-        <th>Asset URL</th>
-        <th>Actions</th>
-    </tr>
-</thead>
-<tbody>
-    {% for endpoint in endpoints %}
-    <tr>
-        <td><span class="http-method http-{{ endpoint.method.lower() }}">{{ endpoint.method }}</span></td>
-        <td class="url-cell">{{ endpoint.path }}</td>
-        <td><span class="status-code status-{{ endpoint.status_code // 100 }}xx">{{ endpoint.status_code }}</span></td>
-        <td>{{ endpoint.project_name or 'N/A' }}</td>
-        <td class="url-cell">{{ endpoint.asset_url or 'N/A' }}</td>
-        <td>
-            <a href="/asset/{{ endpoint.asset_id }}" class="btn btn-small">View Asset</a>
-        </td>
-    </tr>
-    {% endfor %}
-</tbody>
-{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Endpoints Management</h1>
+    <p>Unified Security Assessment Platform</p>
+    <p class="page-subtitle">Found {{ endpoints|length }} endpoints across all projects</p>
+</div>
 
-{% block pagination %}
-<!-- Simple pagination for now -->
+<!-- Search Bar -->
+<div class="search-container">
+    <input type="text" id="searchInput" placeholder="Search endpoints by method, path, status, project..." class="search-input" onkeyup="searchEndpoints()">
+</div>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Method</th>
+                <th>Path</th>
+                <th>Status</th>
+                <th>Project</th>
+                <th>Asset URL</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for endpoint in endpoints %}
+            <tr>
+                <td><span class="http-method http-{{ endpoint.method.lower() }}">{{ endpoint.method }}</span></td>
+                <td class="url-cell">{{ endpoint.path }}</td>
+                <td><span class="status-code status-{{ endpoint.status_code // 100 }}xx">{{ endpoint.status_code }}</span></td>
+                <td>{{ endpoint.project_name or 'N/A' }}</td>
+                <td class="url-cell">{{ endpoint.asset_url or 'N/A' }}</td>
+                <td>
+                    <a href="/asset/{{ endpoint.asset_id }}" class="btn-view">View Asset</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
 <div class="pagination-controls">
     <span>Showing {{ endpoints|length }} endpoints</span>
 </div>
+
+<!-- Search JavaScript -->
+<script>
+function searchEndpoints() {
+    const input = document.getElementById('searchInput');
+    const filter = input.value.toLowerCase();
+    const table = document.querySelector('.data-table');
+    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const cells = rows[i].getElementsByTagName('td');
+        let found = false;
+        
+        for (let j = 0; j < cells.length; j++) {
+            if (cells[j]) {
+                const textValue = cells[j].textContent || cells[j].innerText;
+                if (textValue.toLowerCase().indexOf(filter) > -1) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        
+        rows[i].style.display = found ? '' : 'none';
+    }
+}
+
+// Trigger search on page load if there's text in the input
+document.addEventListener('DOMContentLoaded', function() {
+    const input = document.getElementById('searchInput');
+    if (input.value) {
+        searchEndpoints();
+    }
+});
+</script>
 {% endblock %}
