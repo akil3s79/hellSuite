@@ -2,14 +2,13 @@
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">Projects</h1>
-    <p class="page-subtitle">Unified Security Assessment Platform</p>
+    <h1 class="page-title">Security Reports</h1>
+    <p class="page-subtitle">Generate and export assessment reports</p>
 </div>
 
 <div class="table-container">
-    <!-- HEADER -->
     <div style="background: var(--dark-blue); color: white; padding: 12px 15px; border-radius: 6px 6px 0 0; font-weight: bold;">
-        All Projects
+        Available Reports
     </div>
     
     <div style="padding: 20px;">
@@ -25,9 +24,11 @@
                 </div>
             </div>
             <div class="project-actions">
-                <a href="/assets?project={{ project.id }}" class="btn-view">View Assets</a>
-                <a href="/project/{{ project.id }}/report" class="btn-view" style="background: #A10202; margin-left: 8px;">
-                    📄 Report
+                <a href="/project/{{ project.id }}/report" class="btn-view" style="background: #A10202;">
+                    📄 View Report
+                </a>
+                <a href="/project/{{ project.id }}/report/pdf" class="btn-view" style="background: var(--dark-blue); margin-left: 8px;">
+                    ⬇️ Export PDF
                 </a>
             </div>
         </div>

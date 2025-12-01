@@ -3,81 +3,89 @@
 {% block content %}
 <div class="page-header">
     <h1 class="page-title">Endpoints Management</h1>
-    <p>Unified Security Assessment Platform</p>
-    <p class="page-subtitle">Found {{ endpoints|length }} endpoints across all projects</p>
-</div>
-
-<!-- Search Bar -->
-<div class="search-container">
-    <input type="text" id="searchInput" placeholder="Search endpoints by method, path, status, project..." class="search-input" onkeyup="searchEndpoints()">
+    <p class="page-subtitle">{{ stats_summary }}</p>
 </div>
 
 <div class="table-container">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Method</th>
-                <th>Path</th>
-                <th>Status</th>
-                <th>Project</th>
-                <th>Asset URL</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for endpoint in endpoints %}
-            <tr>
-                <td><span class="http-method http-{{ endpoint.method.lower() }}">{{ endpoint.method }}</span></td>
-                <td class="url-cell">{{ endpoint.path }}</td>
-                <td><span class="status-code status-{{ endpoint.status_code // 100 }}xx">{{ endpoint.status_code }}</span></td>
-                <td>{{ endpoint.project_name or 'N/A' }}</td>
-                <td class="url-cell">{{ endpoint.asset_url or 'N/A' }}</td>
-                <td>
-                    <a href="/asset/{{ endpoint.asset_id }}" class="btn-view">View Asset</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <!-- HEADER -->
+    <div style="background: var(--dark-blue); color: white; padding: 12px 15px; border-radius: 6px 6px 0 0; font-weight: bold;">
+        Endpoints Found ({{ endpoints|length }})
+    </div>
+    
+    <div style="padding: 20px;">
+        <!-- Search Bar -->
+        <div class="search-container">
+            <input type="text" 
+                   id="searchInput" 
+                   class="search-input" 
+                   placeholder="Search endpoints (path, method, status, project)..."
+                   onkeyup="searchEndpoints()">
+        </div>
+
+        <!-- Endpoints Table -->
+        <table class="data-table" id="endpointsTable">
+            <thead>
+                <tr>
+                    <th>Method</th>
+                    <th>Path</th>
+                    <th>Status</th>
+                    <th>Project</th>
+                    <th>Asset URL</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for endpoint in endpoints %}
+                <tr>
+                    <td>
+                        <span class="http-method http-{{ endpoint.method.lower() }}">
+                            {{ endpoint.method }}
+                        </span>
+                    </td>
+                    <td>{{ endpoint.path }}</td>
+                    <td>
+                        <span class="status-code status-{{ endpoint.status_code // 100 }}xx">
+                            {{ endpoint.status_code }}
+                        </span>
+                    </td>
+                    <td>{{ endpoint.project_name or 'N/A' }}</td>
+                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ endpoint.asset_url or 'N/A' }}
+                    </td>
+                    <td>
+                        <a href="/asset/{{ endpoint.asset_id }}" class="btn-view">View Asset</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 
-<!-- Pagination -->
-<div class="pagination-controls">
-    <span>Showing {{ endpoints|length }} endpoints</span>
-</div>
-
-<!-- Search JavaScript -->
 <script>
 function searchEndpoints() {
-    const input = document.getElementById('searchInput');
-    const filter = input.value.toLowerCase();
-    const table = document.querySelector('.data-table');
-    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+    var input = document.getElementById('searchInput');
+    var filter = input.value.toUpperCase();
+    var table = document.getElementById('endpointsTable');
+    var tr = table.getElementsByTagName('tr');
     
-    for (let i = 0; i < rows.length; i++) {
-        const cells = rows[i].getElementsByTagName('td');
-        let found = false;
+    for (var i = 1; i < tr.length; i++) {
+        var tds = tr[i].getElementsByTagName('td');
+        var found = false;
         
-        for (let j = 0; j < cells.length; j++) {
-            if (cells[j]) {
-                const textValue = cells[j].textContent || cells[j].innerText;
-                if (textValue.toLowerCase().indexOf(filter) > -1) {
+        for (var j = 0; j < tds.length - 1; j++) { // Exclude actions column
+            var td = tds[j];
+            if (td) {
+                var textValue = td.textContent || td.innerText;
+                if (textValue.toUpperCase().indexOf(filter) > -1) {
                     found = true;
                     break;
                 }
             }
         }
         
-        rows[i].style.display = found ? '' : 'none';
+        tr[i].style.display = found ? '' : 'none';
     }
 }
-
-// Trigger search on page load if there's text in the input
-document.addEventListener('DOMContentLoaded', function() {
-    const input = document.getElementById('searchInput');
-    if (input.value) {
-        searchEndpoints();
-    }
-});
 </script>
 {% endblock %}

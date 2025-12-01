@@ -1,38 +1,35 @@
-{% extends "base.html" %}
+{% extends "base_login.html" %}
 
 {% block content %}
 <div class="login-wrapper">
     <div class="login-container">
         <div class="login-header">
-            <h2>🔐 HellSsus Security Platform</h2>
-            <p>Access restricted to authorized personnel only</p>
+            <h2>HellSsus Security</h2>
+            <p style="font-size: 15px;">Access restricted to authorized personnel only</p>
         </div>
 
         <form method="POST" class="login-form">
             {% if error %}
-            <div class="alert alert-error">
+            <div class="alert-error">
                 {{ error }}
             </div>
             {% endif %}
 
             <div class="form-group">
                 <label for="username">Username:</label>
-                <input type="text" id="username" name="username" maxlength="50" required 
-                       placeholder="Your username">
+                <input type="text" id="username" name="username" maxlength="30" required 
+                       placeholder="Enter your username">
             </div>
 
             <div class="form-group">
                 <label for="password">Password:</label>
-                <input type="password" id="password" name="password" maxlength="100" required 
-                       placeholder="Your password">
+                <input type="password" id="password" name="password" maxlength="30" required 
+                       placeholder="Enter your password">
             </div>
 
             <button type="submit" class="btn-login-submit">Access Dashboard</button>
         </form>
 
-        <div class="login-footer">
-            <small>If you're having trouble accessing, please contact the administrator</small>
-        </div>
     </div>
 </div>
 {% endblock %}

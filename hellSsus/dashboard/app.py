@@ -391,7 +391,9 @@ def export_pdf(project_id):
             pdf = page.pdf(
                 format='A4',
                 print_background=True,
-                margin={'top': '1cm', 'right': '1cm', 'bottom': '1cm', 'left': '1cm'}
+                margin={'top': '1cm', 'right': '1cm', 'bottom': '1cm', 'left': '1cm'},
+                prefer_css_page_size=True,
+                scale=0.9
             )
             browser.close()
             
@@ -405,7 +407,151 @@ def export_pdf(project_id):
         print(f"[!] PDF export error: {e}")
         return "Error generating PDF", 500
 
-# Add this to your app.py after the other routes
+@app.route('/project/<int:project_id>/report/json')
+@login_required
+def export_pwndoc_json(project_id):
+    """Export project data in Pwndoc-compatible JSON format"""
+    try:
+        conn = get_db_connection()
+        
+        # Get project details
+        project = conn.execute(
+            'SELECT * FROM projects WHERE id = ?', (project_id,)
+        ).fetchone()
+        
+        if not project:
+            return "Project not found", 404
+        
+        # Get all vulnerabilities with asset info
+        vulnerabilities = conn.execute('''
+            SELECT v.*, a.url as asset_url 
+            FROM vulnerabilities v 
+            LEFT JOIN assets a ON v.asset_id = a.id 
+            WHERE v.project_id = ? 
+            ORDER BY 
+                CASE v.severity 
+                    WHEN 'critical' THEN 1
+                    WHEN 'high' THEN 2 
+                    WHEN 'medium' THEN 3
+                    WHEN 'low' THEN 4
+                    ELSE 5
+                END,
+                v.cvss_score DESC
+        ''', (project_id,)).fetchall()
+        
+        # Get assets for this project
+        assets = conn.execute('''
+            SELECT * FROM assets WHERE project_id = ?
+        ''', (project_id,)).fetchall()
+        
+        # Primero, averiguar qué columnas tiene realmente la tabla assets
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(assets)")
+        asset_columns = [col[1] for col in cursor.fetchall()]  # Nombre de columnas
+        
+        print(f"[DEBUG] Columnas en tabla assets: {asset_columns}")
+        
+        conn.close()
+        
+        # Transform to Pwndoc format
+        pwndoc_data = {
+            "name": project['name'],
+            "version": "1.0",
+            "exported_from": "HellSuite v4.1",
+            "export_date": datetime.now().isoformat(),
+            "project": {
+                "name": project['name'],
+                "description": project['description'] if 'description' in project.keys() else "",
+                "created_date": project['created_date']
+            },
+            "vulnerabilities": [],
+            "assets": []
+        }
+        
+        # Helper function to safely get value from sqlite3.Row
+        def safe_get(row, key, default=""):
+            """Safely get value from sqlite3.Row or return default"""
+            try:
+                return row[key] if row[key] is not None else default
+            except (KeyError, IndexError):
+                return default
+        
+        # Process vulnerabilities for Pwndoc
+        for vuln in vulnerabilities:
+            # Map severity to CVSS base score
+            severity_to_cvss = {
+                'critical': 9.0,
+                'high': 7.0,
+                'medium': 5.0,
+                'low': 3.0
+            }
+            
+            # Convert sqlite3.Row to dict for easier access
+            vuln_dict = dict(vuln)
+            
+            pwndoc_vuln = {
+                "name": vuln_dict.get('type', 'unknown').replace('_', ' ').title(),
+                "category": "security",
+                "severity": vuln_dict.get('severity', 'medium').upper(),
+                "cvss_score": vuln_dict.get('cvss_score') or severity_to_cvss.get(vuln_dict.get('severity', 'medium'), 5.0),
+                "description": vuln_dict.get('description', ''),
+                "remediation": vuln_dict.get('recommendation', ''),
+                "proof_of_concept": vuln_dict.get('proof_of_concept', ''),
+                "affected_asset": vuln_dict.get('asset_url', 'N/A'),
+                "discovery_date": (vuln_dict.get('discovery_date', '')[:10] 
+                                  if vuln_dict.get('discovery_date') 
+                                  else datetime.now().strftime("%Y-%m-%d")),
+                "references": vuln_dict.get('reference', ''),
+                "cve": vuln_dict.get('cve', '')
+            }
+            pwndoc_data["vulnerabilities"].append(pwndoc_vuln)
+        
+        # Process assets for Pwndoc
+        for asset in assets:
+            # Convert sqlite3.Row to dict
+            asset_dict = dict(asset)
+            
+            # Parse JSON fields safely
+            technologies = []
+            open_ports = []
+            
+            tech_str = asset_dict.get('technologies', '[]')
+            if tech_str:
+                try:
+                    technologies = json.loads(tech_str)
+                except:
+                    technologies = []
+            
+            ports_str = asset_dict.get('open_ports', '[]')
+            if ports_str:
+                try:
+                    open_ports = json.loads(ports_str)
+                except:
+                    open_ports = []
+            
+            pwndoc_asset = {
+                "url": asset_dict.get('url', ''),
+                "ip": asset_dict.get('ip', ''),  # Esto ya no fallará aunque no exista
+                "discovery_date": (asset_dict.get('discovery_date', '')[:10] 
+                                  if asset_dict.get('discovery_date') 
+                                  else ''),
+                "technologies": technologies,
+                "open_ports": open_ports
+            }
+            pwndoc_data["assets"].append(pwndoc_asset)
+        
+        # Create JSON response
+        response = jsonify(pwndoc_data)
+        response.headers.set('Content-Disposition', 'attachment', filename=f'hellsuite_pwndoc_export_{project_id}.json')
+        response.headers.set('Content-Type', 'application/json')
+        
+        return response
+        
+    except Exception as e:
+        print(f"[!] Error generating Pwndoc JSON: {e}")
+        import traceback
+        traceback.print_exc()
+        return f"Error generating Pwndoc export: {str(e)}", 500
 
 @app.route('/endpoints')
 def endpoints():
@@ -506,93 +652,86 @@ def project_report_html(project_id):
         traceback.print_exc()
         return f"Error generating report: {str(e)}", 500
 
-def generate_pdf_html(project_id):
-    """Generate PROFESSIONAL PDF report"""
+@app.route('/reports')
+@login_required
+def reports_list():
+    """List all projects with report links"""
     conn = get_db_connection()
-    
-    project = conn.execute('SELECT * FROM projects WHERE id = ?', (project_id,)).fetchone()
-    vulnerabilities = conn.execute('''
-        SELECT * FROM vulnerabilities WHERE project_id = ? ORDER BY 
-        CASE severity 
-            WHEN 'critical' THEN 1 WHEN 'high' THEN 2 
-            WHEN 'medium' THEN 3 WHEN 'low' THEN 4 ELSE 5 
-        END
-    ''', (project_id,)).fetchall()
-    
+    projects = conn.execute(
+        'SELECT * FROM projects ORDER BY created_date DESC'
+    ).fetchall()
     conn.close()
     
-    pdf_template = """
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>HellSuite Security Report - {{ project.name }}</title>
-        <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { 
-                font-family: 'Segoe UI', Arial, sans-serif; 
-                line-height: 1.6; 
-                color: #333;
-                margin: 2cm;
-                font-size: 12px;
-            }
-            
-            .report-header { 
-                border-bottom: 3px solid #1a365d; 
-                padding-bottom: 1.5cm; 
-                margin-bottom: 1.5cm; 
-            }
-            .report-header h1 { 
-                color: #1a365d; 
-                font-size: 24px; 
-                margin-bottom: 0.5cm; 
-            }
-            .report-meta { 
-                display: table; 
-                width: 100%; 
-                border-collapse: collapse; 
-            }
-            .meta-row { display: table-row; }
-            .meta-label, .meta-value { 
-                display: table-cell; 
-                padding: 0.2cm 0; 
-                border-bottom: 1px solid #e2e8f0; 
-            }
-            .meta-label { 
-                font-weight: bold; 
-                width: 30%; 
-                color: #4a5568; 
-            }
-        </style>
-    </head>
-    <body>
-        <div class="report-header">
-            <h1>HellSuite Security Assessment Report</h1>
-            <div class="report-meta">
-                <div class="meta-row">
-                    <div class="meta-label">Project:</div>
-                    <div class="meta-value">{{ project.name }}</div>
-                </div>
-                <div class="meta-row">
-                    <div class="meta-label">Report Generated:</div>
-                    <div class="meta-value">{{ report_date }}</div>
-                </div>
-            </div>
-        </div>
+    return render_template('reports_list.html', projects=projects)
+
+def generate_pdf_html(project_id):
+    """Generate PDF report using the new unified template"""
+    try:
+        conn = get_db_connection()
         
-        <div class="report-footer">
-            <p>HellSuite Security Report - Confidential - Generated on {{ report_date }}</p>
-        </div>
-    </body>
-    </html>
-    """
-    
-    from flask import render_template_string
-    return render_template_string(pdf_template,
-        project=project,
-        report_date=datetime.now().strftime("%Y-%m-%d %H:%M"),
-        vulnerabilities=vulnerabilities
-    )
+        # Get project details
+        project = conn.execute(
+            'SELECT * FROM projects WHERE id = ?', (project_id,)
+        ).fetchone()
+        
+        if not project:
+            return "<html><body>Project not found</body></html>"
+        
+        # Get vulnerabilities count by severity
+        severity_rows = conn.execute('''
+            SELECT severity, COUNT(*) as count 
+            FROM vulnerabilities 
+            WHERE project_id = ? 
+            GROUP BY severity
+        ''', (project_id,)).fetchall()
+        
+        # Convert to dict
+        severity_counts = {}
+        for row in severity_rows:
+            severity_counts[row['severity']] = row['count']
+        
+        # Get critical vulnerabilities
+        critical_vulns = conn.execute('''
+            SELECT * FROM vulnerabilities 
+            WHERE project_id = ? AND severity = 'critical'
+            ORDER BY cvss_score DESC
+            LIMIT 5
+        ''', (project_id,)).fetchall()
+        
+        # Get all vulnerabilities with asset info
+        vulnerabilities = conn.execute('''
+            SELECT v.*, a.url as asset_url 
+            FROM vulnerabilities v 
+            LEFT JOIN assets a ON v.asset_id = a.id 
+            WHERE v.project_id = ? 
+            ORDER BY 
+                CASE v.severity 
+                    WHEN 'critical' THEN 1
+                    WHEN 'high' THEN 2 
+                    WHEN 'medium' THEN 3
+                    WHEN 'low' THEN 4
+                    ELSE 5
+                END,
+                v.cvss_score DESC
+        ''', (project_id,)).fetchall()
+        
+        conn.close()
+        
+        # Render the PDF-specific template
+        return render_template('report_pdf.html',
+            project=project,
+            current_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            severity_counts=severity_counts,
+            critical_vulns=critical_vulns,
+            vulnerabilities=vulnerabilities,
+            project_id=project_id
+        )
+        
+    except Exception as e:
+        print(f"[!] Error generating PDF HTML: {e}")
+        import traceback
+        traceback.print_exc()
+        return f"<html><body>Error generating PDF: {str(e)}</body></html>"
 
 # Initialize database on startup
 with app.app_context():

@@ -3,16 +3,19 @@
 {% block content %}
 <div class="page-header">
     <h1 class="page-title">Vulnerabilities</h1>
-    <p>Unified Security Assessment Platform</p>
+    <p class="page-subtitle">Unified Security Assessment Platform</p>
     {% if project_name %}
     <p class="page-subtitle">Project: {{ project_name }}</p>
     {% endif %}
 </div>
 
 <div class="table-container">
-    <div class="vulnerabilities-content">
-        <h3>Vulnerabilities Found ({{ vulnerabilities|length }})</h3>
-        
+    <!-- HEADER AZUL UNIFICADO -->
+    <div style="background: var(--dark-blue); color: white; padding: 12px 15px; border-radius: 6px 6px 0 0; font-weight: bold;">
+        Vulnerabilities Found ({{ vulnerabilities|length }})
+    </div>
+    
+    <div style="padding: 20px;">
         {% if vulnerabilities %}
         <div class="severity-stats">
             {% set critical = vulnerabilities|selectattr('severity', 'equalto', 'critical')|list %}

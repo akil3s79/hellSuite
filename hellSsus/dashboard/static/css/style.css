@@ -435,3 +435,113 @@ body {
     padding: 40px;
     color: var(--gray);
 }
+
+/* ===== LOGIN STYLES ===== */
+.login-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: var(--light-blue);
+    body:has(.login-wrapper) .sidebar {
+    display: none;
+}
+
+.login-container {
+    background: var(--white);
+    padding: 40px;
+    border-radius: 12px;
+    border: 2px solid var(--dark-blue);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    width: 100%;
+    max-width: 450px;
+}
+
+.login-header {
+    text-align: center;
+    margin-bottom: 30px;
+    border-bottom: 2px solid var(--dark-blue);
+    padding-bottom: 20px;
+}
+
+.login-header h2 {
+    color: var(--dark-blue);
+    font-size: 2em;
+    margin-bottom: 10px;
+}
+
+.login-header p {
+    color: var(--gray);
+    font-size: 1.1em;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: var(--dark-blue);
+    font-size: 1em;
+}
+
+.form-group input {
+    padding: 14px;
+    border: 2px solid var(--dark-blue);
+    border-radius: 6px;
+    font-size: 1em;
+    transition: all 0.3s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--medium-blue);
+    box-shadow: 0 0 0 3px rgba(45, 116, 218, 0.2);
+}
+
+.btn-login-submit {
+    background: var(--dark-blue);
+    color: white;
+    border: none;
+    padding: 16px;
+    border-radius: 6px;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 10px;
+}
+
+.btn-login-submit:hover {
+    background: var(--medium-blue);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.alert-error {
+    background: #fed7d7;
+    color: #c53030;
+    padding: 15px;
+    border-radius: 6px;
+    border: 1px solid #fc8181;
+    margin-bottom: 20px;
+    text-align: center;
+    font-weight: 500;
+}
+
+.login-footer {
+    margin-top: 30px;
+    text-align: center;
+    color: var(--gray);
+    font-size: 0.9em;
+    border-top: 1px solid var(--light-gray);
+    padding-top: 20px;
+}

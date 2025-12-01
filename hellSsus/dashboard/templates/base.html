@@ -11,6 +11,9 @@
         <div class="sidebar-content">
             <div class="sidebar-header">
                 <h3>Menu</h3>
+                <a href="/reports" class="sidebar-link {% if request.path.startswith('/reports') %}active{% endif %}">
+                    📄 Reports
+                </a>
             </div>
             <div class="sidebar-links">
                 <a href="/" class="sidebar-link {% if request.path == '/' %}active{% endif %}">
@@ -46,14 +49,14 @@
 </div>
 
     <script>
-        // Sidebar siempre visible - comentamos el toggle
+        // Sidebar always visible
         /*
         // Sidebar toggle functionality
         const sidebar = document.getElementById('sidebar');
         const mainContent = document.getElementById('mainContent');
         const sidebarToggle = document.getElementById('sidebarToggle');
         
-        // Default: sidebar visible
+        // 
         sidebar.classList.add('active');
         mainContent.classList.add('sidebar-active');
 
