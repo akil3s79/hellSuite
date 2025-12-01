@@ -28,6 +28,9 @@
                 <a href="/vulnerabilities" class="sidebar-link {% if request.path == '/vulnerabilities' %}active{% endif %}">
                     ⚠️ Vulnerabilities
                 </a>
+                <a href="/logout" class="sidebar-link" style="margin-top: 20px; border-top: 1px solid var(--medium-blue); border-left: 1px solid var(--medium-blue); border-right: 1px solid var(--medium-blue); border-bottom: 1px solid var(--medium-blue); padding-top: 15px;">
+                    🚪 Logout ({{ session.username }})
+                </a>    
             </div>
         </div>
     </div>

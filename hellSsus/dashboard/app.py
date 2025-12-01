@@ -307,8 +307,9 @@ def asset_detail(asset_id):
                          project_name=project['name'] if project else 'Unknown')
 
 @app.route('/project/<int:project_id>/report')
-def project_report(project_id):
-    """Generate HTML report for a project"""
+@login_required
+def project_report(project_id):  # MISMO NOMBRE que la ruta vieja
+    """Generate HTML report with unified dashboard design"""
     try:
         conn = get_db_connection()
         
@@ -341,24 +342,26 @@ def project_report(project_id):
             LIMIT 5
         ''', (project_id,)).fetchall()
         
-        # Get all vulnerabilities
+        # Get all vulnerabilities with asset info
         vulnerabilities = conn.execute('''
-            SELECT * FROM vulnerabilities 
-            WHERE project_id = ? 
+            SELECT v.*, a.url as asset_url 
+            FROM vulnerabilities v 
+            LEFT JOIN assets a ON v.asset_id = a.id 
+            WHERE v.project_id = ? 
             ORDER BY 
-                CASE severity 
+                CASE v.severity 
                     WHEN 'critical' THEN 1
                     WHEN 'high' THEN 2 
                     WHEN 'medium' THEN 3
                     WHEN 'low' THEN 4
                     ELSE 5
                 END,
-                cvss_score DESC
+                v.cvss_score DESC
         ''', (project_id,)).fetchall()
         
         conn.close()
         
-        return render_template('base_report.html',
+        return render_template('report_html.html',
             project=project,
             current_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             severity_counts=severity_counts,
@@ -368,7 +371,7 @@ def project_report(project_id):
         )
         
     except Exception as e:
-        print(f"[!] Error generating report: {e}")
+        print(f"[!] Error generating HTML report: {e}")
         import traceback
         traceback.print_exc()
         return f"Error generating report: {str(e)}", 500
@@ -432,6 +435,76 @@ def endpoints():
                          endpoints=endpoints_data,
                          page_title='Endpoints Management',
                          stats_summary=f'Found {len(endpoints_data)} endpoints across all projects')
+
+@app.route('/project/<int:project_id>/report')
+@login_required
+def project_report_html(project_id):
+    """Generate HTML report with unified dashboard design"""
+    try:
+        conn = get_db_connection()
+        
+        # Get project details
+        project = conn.execute(
+            'SELECT * FROM projects WHERE id = ?', (project_id,)
+        ).fetchone()
+        
+        if not project:
+            return "Project not found", 404
+        
+        # Get vulnerabilities count by severity
+        severity_rows = conn.execute('''
+            SELECT severity, COUNT(*) as count 
+            FROM vulnerabilities 
+            WHERE project_id = ? 
+            GROUP BY severity
+        ''', (project_id,)).fetchall()
+        
+        # Convert to dict for easy access
+        severity_counts = {}
+        for row in severity_rows:
+            severity_counts[row['severity']] = row['count']
+        
+        # Get critical vulnerabilities for executive summary
+        critical_vulns = conn.execute('''
+            SELECT * FROM vulnerabilities 
+            WHERE project_id = ? AND severity = 'critical'
+            ORDER BY cvss_score DESC
+            LIMIT 5
+        ''', (project_id,)).fetchall()
+        
+        # Get all vulnerabilities with asset info
+        vulnerabilities = conn.execute('''
+            SELECT v.*, a.url as asset_url 
+            FROM vulnerabilities v 
+            LEFT JOIN assets a ON v.asset_id = a.id 
+            WHERE v.project_id = ? 
+            ORDER BY 
+                CASE v.severity 
+                    WHEN 'critical' THEN 1
+                    WHEN 'high' THEN 2 
+                    WHEN 'medium' THEN 3
+                    WHEN 'low' THEN 4
+                    ELSE 5
+                END,
+                v.cvss_score DESC
+        ''', (project_id,)).fetchall()
+        
+        conn.close()
+        
+        return render_template('report_html.html',
+            project=project,
+            current_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            severity_counts=severity_counts,
+            critical_vulns=critical_vulns,
+            vulnerabilities=vulnerabilities,
+            project_id=project_id
+        )
+        
+    except Exception as e:
+        print(f"[!] Error generating HTML report: {e}")
+        import traceback
+        traceback.print_exc()
+        return f"Error generating report: {str(e)}", 500
 
 def generate_pdf_html(project_id):
     """Generate PROFESSIONAL PDF report"""
