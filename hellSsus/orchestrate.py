@@ -10,17 +10,28 @@ import traceback
 
 # Import new logging and error handling
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from config import *
+
+import hellconfig
 from config.logging_config import orchestrate_logger, setup_application_logging
 from utils.error_handler import (
-    HellSuiteError, IntegrationError, TimeoutError, NetworkError,
-    retry, validate_url, DatabaseConnection, log_error_with_context,
-    safe_execute
+    HellSuiteError, TimeoutError, NetworkError,
+    retry, validate_url, log_error_with_context
 )
 from utils.decorators import (
-    log_execution, validate_target_url, robust_scan, 
-    require_kwargs, cached
+    log_execution, validate_target_url, require_kwargs, cached
 )
+
+DATABASE_PATH = hellconfig.DATABASE_PATH
+HELLSCANNER_PATH = hellconfig.HELLSCANNER_PATH
+SCANS_DIR = hellconfig.SCANS_DIR
+WORDLISTS_DIR = hellconfig.WORDLISTS_DIR
+HELLRECON_PATH = hellconfig.HELLRECON_PATH
+HELLFUZZER_PATH = hellconfig.HELLFUZZER_PATH
+get_scan_path = hellconfig.get_scan_path
+get_latest_scan = hellconfig.get_latest_scan
+
+# Alias for backward compatibility
+robust_scan = log_execution(log_args=True, log_time=True)
 
 # Setup logging
 setup_application_logging()
@@ -135,8 +146,6 @@ def run_hellfuzzer(target, output_file, wordlist="common.txt"):
 def run_hellscanner(target, output_file, project_name, project_id):
     """Run HellScanner with retry logic"""
     try:
-        from config import HELLSCANNER_PATH
-        
         orchestrate_logger.info(f"Running HellScanner for project: {project_name}")
         
         hellscanner_cmd = [
@@ -210,7 +219,6 @@ def get_or_create_project(project_name):
         return None
 
 @log_execution(log_args=True, log_time=True)
-@require_kwargs(target=str, project=str)
 def import_tool_results(tool_name, target, output_file, project_id):
     """Import tool results with standardized error handling"""
     try:
@@ -309,7 +317,7 @@ def main():
     if 'scanner' in args.tools or 'all' in args.tools:
         tools_run += 1
         scanner_output = get_scan_path("hellscanner", args.target)
-        if run_hellscanner(args.target, scanner_output, args.project, project_id):
+        if import_tool_results("hellscanner", args.target, scanner_output, project_id):
             tools_success += 1
             orchestrate_logger.info("HellScanner completed and data imported")
         else:

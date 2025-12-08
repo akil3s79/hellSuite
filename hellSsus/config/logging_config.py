@@ -33,7 +33,23 @@ class SecureFormatter(logging.Formatter):
         # Redact sensitive patterns
         import re
         for pattern in SENSITIVE_PATTERNS:
-            message = re.sub(pattern, r'\1=[REDACTED]', message, flags=re.IGNORECASE)
+            try:
+                # Attempt substitution with error handling
+                compiled = re.compile(pattern, re.IGNORECASE)
+                
+                # Check if pattern has named or numbered groups
+                if compiled.groups > 0:
+                    # Has capture groups
+                    message = compiled.sub(r'\1=[REDACTED]', message)
+                else:
+                    # No capture groups
+                    message = compiled.sub('[REDACTED]', message)
+                    
+            except (re.error, IndexError) as e:
+                # Fallback: simple string replacement
+                if re.search(pattern, message, re.IGNORECASE):
+                    message = message.replace(pattern, '[REDACTED]')
+                continue
         
         return message
 
@@ -156,13 +172,13 @@ LOG_LEVELS = {
 }
 
 # Create loggers for main modules (can be imported directly)
-dashboard_logger = get_logger('dashboard')
-orchestrate_logger = get_logger('orchestrate')
-scanner_logger = get_logger('scanner')
-recon_logger = get_logger('recon')
-fuzzer_logger = get_logger('fuzzer')
-adapter_logger = get_logger('adapter')
-database_logger = get_logger('database')
+dashboard_logger = get_logger('dashboard', log_to_file=True)
+orchestrate_logger = get_logger('orchestrate', log_to_file=True)
+scanner_logger = get_logger('scanner', log_to_file=True)
+recon_logger = get_logger('recon', log_to_file=True)
+fuzzer_logger = get_logger('fuzzer', log_to_file=True)
+adapter_logger = get_logger('adapter', log_to_file=True)
+database_logger = get_logger('database', log_to_file=True)
 
 # Metrics logger (for performance tracking)
 metrics_logger = get_logger('metrics')

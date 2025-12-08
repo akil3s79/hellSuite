@@ -39,5 +39,21 @@ def get_latest_scan(tool_name):
 def get_scan_path(tool_name, target):
     """Generate scan file path for a new scan"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"{tool_name}_scan_{target.replace('://', '_').replace('/', '_')}_{timestamp}.json"
+    # Sanitize target for filename
+    safe_target = target.replace('://', '_').replace('/', '_').replace(':', '_').replace('?', '_').replace('&', '_')
+    filename = f"{tool_name}_scan_{safe_target}_{timestamp}.json"
     return os.path.join(SCANS_DIR, filename)
+
+# Export all for easier imports
+__all__ = [
+    'DATABASE_PATH',
+    'HELLSCANNER_PATH',
+    'HELLRECON_PATH',
+    'HELLFUZZER_PATH',
+    'SCANS_DIR',
+    'WORDLISTS_DIR',
+    'REPORTS_DIR',
+    'SHARED_DATA_DIR',
+    'get_scan_path',
+    'get_latest_scan'
+]

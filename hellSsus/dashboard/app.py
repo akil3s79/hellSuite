@@ -11,6 +11,12 @@ import io
 from functools import wraps
 from datetime import datetime
 
+# Add parent directory to path for config import
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+import logging
+from config.logging_config import dashboard_logger, setup_application_logging
+
 # Load environment variables WITHOUT dotenv first
 import os
 from pathlib import Path
@@ -23,7 +29,7 @@ if env_path.exists():
     try:
         from dotenv import load_dotenv
         load_dotenv(env_path)
-        print(f"[INIT] .env loaded from: {env_path}")
+        dashboard_logger.info(f".env loaded from: {env_path}")
     except ImportError:
         print("[WARNING] python-dotenv not installed, using os.environ")
 else:
@@ -59,12 +65,11 @@ def inject_config():
         'debug_mode': app.config['DEBUG']
     }
 
-# Add parent directory to path for config import
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 try:
-    from config import DATABASE_PATH
+    from hellconfig import DATABASE_PATH
+    dashboard_logger.debug(f"Database path: {DATABASE_PATH}")
 except ImportError:
-    print("[WARNING] config.py not found or DATABASE_PATH not defined")
+    dashboard_logger.warning("config.py not found or DATABASE_PATH not defined")
 
 def get_db_connection():
     """Connect to SQLite database"""
@@ -87,13 +92,13 @@ def init_users_table():
         columns = [col[1] for col in cursor.fetchall()]
         
         if 'role' not in columns:
-            print("[*] Adding 'role' column to users table")
+            dashboard_logger.info("Adding 'role' column to users table")
             try:
                 conn.execute('ALTER TABLE users ADD COLUMN role VARCHAR(20) DEFAULT "viewer"')
                 conn.commit()
                 print("[+] Role column added successfully")
             except Exception as e:
-                print(f"[!] Error adding role column: {e}")
+                dashboard_logger.error(f"Error adding role column: {e}", exc_info=True)
         
         # Create table if it doesn't exist
         conn.execute('''
@@ -167,7 +172,7 @@ def create_default_user():
         print(f"[+] Default admin user created: admin / {default_password} (role: admin)")
         print("[!] Change default password in production!")
     else:
-        print(f"[*] Users already exist: {user_count} users")
+        dashboard_logger.info(f"Users already exist: {user_count} users")
 
 # ============================================================================
 # ROLE-BASED ACCESS CONTROL SYSTEM
@@ -895,12 +900,33 @@ def internal_error(error):
 init_users_table()
 create_default_user()
 
-print("[*] HellSsus Dashboard starting...")
-print("[*] Access at: http://localhost:5000")
+setup_application_logging()  # Initialize logging system
+dashboard_logger.info("HellSsus Dashboard starting")
+dashboard_logger.info(f"Access at: http://localhost:5000")
+
 if app.config['DEBUG']:
-    print("[!] WARNING: Debug mode is ENABLED - Disable in production!")
+    dashboard_logger.warning("DEBUG mode is ENABLED - Disable in production!")
     if app.config['ALLOW_REGISTER']:
-        print("[!] WARNING: User registration is ENABLED")
+        dashboard_logger.warning("User registration is ENABLED")
+
+# ============================================================================
+# APPLICATION INITIALIZATION
+# ============================================================================
+
+# Setup logging first
+setup_application_logging()
+
+# Initialize database on startup
+init_users_table()
+create_default_user()
+
+dashboard_logger.info("HellSsus Dashboard starting")
+dashboard_logger.info(f"Access at: http://localhost:5000")
+
+if app.config['DEBUG']:
+    dashboard_logger.warning("DEBUG mode is ENABLED - Disable in production!")
+    if app.config['ALLOW_REGISTER']:
+        dashboard_logger.warning("User registration is ENABLED")
 
 if __name__ == '__main__':
     app.run(debug=app.config['DEBUG'], host='0.0.0.0', port=5000)

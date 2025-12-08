@@ -6,7 +6,7 @@ from datetime import datetime
 
 # Import config
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import DATABASE_PATH
+from hellconfig import DATABASE_PATH
 
 class HellScannerAdapter:
     def __init__(self, db_path=DATABASE_PATH):

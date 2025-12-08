@@ -136,6 +136,18 @@ ENV/
 env.bak/
 venv.bak/
 
+# Logs
+hellSsus/logs/
+*.log
+
+# Database
+hellSsus/database/hellSsus.db
+hellSsus/database/*.db
+
+# Scan results
+shared_data/scans/*.json
+shared_data/reports/*.pdf
+
 # Spyder project settings
 .spyderproject
 .spyproject
