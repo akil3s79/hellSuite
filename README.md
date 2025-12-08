@@ -26,7 +26,7 @@
 
 ### Installation
 
-```bash
+````bash`
 
 # Clone the repository
 git clone https://github.com/yourusername/hellsuite.git
@@ -38,10 +38,8 @@ pip install -r requirements.txt
 # Install Playwright for PDF generation
 python -m playwright install
 
-# Setup environment
-cp .env.example .env
 # Edit .env with your configuration
-
+````
 
 ### Configuration
 

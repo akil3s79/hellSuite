@@ -1,6 +1,9 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+*.pyc
+*.pyo
+*.pyd
 *$py.class
 
 # C extensions
@@ -135,18 +138,37 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+*.env.local
+
+# IDE files
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+
+# Debug/Diagnostic files
+diagnostico_*
+test_*.py
+debug.py
 
 # Logs
 hellSsus/logs/
 *.log
 
 # Database
-hellSsus/database/hellSsus.db
 hellSsus/database/*.db
+hellSsus/integrations/*.db
+*.db
 
 # Scan results
-shared_data/scans/*.json
-shared_data/reports/*.pdf
+shared_data/scans/
+shared_data/reports/
 
 # Spyder project settings
 .spyderproject
