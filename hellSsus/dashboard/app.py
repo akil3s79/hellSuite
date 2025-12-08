@@ -1,28 +1,76 @@
 """
 HellSsus Dashboard - Simple Flask UI
 """
+import os
+import sys
 from flask import Flask, render_template, jsonify, request, session, redirect, url_for, send_file
 from passlib.hash import pbkdf2_sha256
 import sqlite3
-import os
-import sys
 import json
 import io
 from functools import wraps
 from datetime import datetime
 
+# Load environment variables WITHOUT dotenv first
+import os
+from pathlib import Path
+
+# Search .env in project root
+project_root = Path(__file__).parent.parent.parent  
+env_path = project_root / '.env'
+
+if env_path.exists():
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(env_path)
+        print(f"[INIT] .env loaded from: {env_path}")
+    except ImportError:
+        print("[WARNING] python-dotenv not installed, using os.environ")
+else:
+    print(f"[WARNING] .env file not found at: {env_path}")
+    print("[INIT] Using default configuration")
+
+# Initialize Flask app
+app = Flask(__name__)
+
+DEFAULT_SECRET = 'default-secret-key-CHANGE-THIS-IN-PRODUCTION-123'
+
+secret_key = os.getenv('HELLSUITE_SECRET_KEY', DEFAULT_SECRET)
+debug_str = os.getenv('HELLSUITE_DEBUG', 'False')
+allow_register_str = os.getenv('HELLSUITE_ALLOW_REGISTER', 'False')
+
+# APP config
+app.secret_key = secret_key
+app.config['DEBUG'] = debug_str.lower() == 'true'
+app.config['ALLOW_REGISTER'] = allow_register_str.lower() == 'true'
+
+if app.config['DEBUG']:
+    print(f"[DEBUG] Registration enabled: {app.config['ALLOW_REGISTER']}")
+
+# ============================================================================
+# TEMPLATE CONTEXT PROCESSORS
+# ============================================================================
+
+@app.context_processor
+def inject_config():
+    """Inject configuration variables into all templates"""
+    return {
+        'allow_register': app.config['ALLOW_REGISTER'],
+        'debug_mode': app.config['DEBUG']
+    }
+
 # Add parent directory to path for config import
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import DATABASE_PATH
-
-app = Flask(__name__)
-app.secret_key = 'hellsus-super-secret-key-change-in-production'
+try:
+    from config import DATABASE_PATH
+except ImportError:
+    print("[WARNING] config.py not found or DATABASE_PATH not defined")
 
 def get_db_connection():
+    """Connect to SQLite database"""
     # Go up one level from the dashboard and enter the database.
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     db_path = os.path.join(base_dir, 'database', 'hellSsus.db')
-    print(f"📁 CONNECTING TO: {db_path}")
     
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -31,16 +79,57 @@ def get_db_connection():
 def init_users_table():
     """Create users table if it doesn't exist"""
     conn = get_db_connection()
-    conn.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username VARCHAR(50) UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            created_date DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    conn.commit()
-    conn.close()
+    
+    try:
+        # Check if role column exists, add it if not
+        cursor = conn.cursor()
+        cursor.execute("PRAGMA table_info(users)")
+        columns = [col[1] for col in cursor.fetchall()]
+        
+        if 'role' not in columns:
+            print("[*] Adding 'role' column to users table")
+            try:
+                conn.execute('ALTER TABLE users ADD COLUMN role VARCHAR(20) DEFAULT "viewer"')
+                conn.commit()
+                print("[+] Role column added successfully")
+            except Exception as e:
+                print(f"[!] Error adding role column: {e}")
+        
+        # Create table if it doesn't exist
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username VARCHAR(50) UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                role VARCHAR(20) DEFAULT 'viewer',
+                created_date DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        
+        # Ensure admin user has admin role
+        admin_user = conn.execute(
+            'SELECT * FROM users WHERE username = ?', ('admin',)
+        ).fetchone()
+        
+        # CORREGIDO: Usar acceso por índice, no .get()
+        if admin_user:
+            # Convert Row to dict para acceso seguro
+            admin_dict = dict(admin_user)
+            if admin_dict.get('role') != 'admin':
+                conn.execute(
+                    'UPDATE users SET role = ? WHERE username = ?',
+                    ('admin', 'admin')
+                )
+                print("[*] Updated admin user role to 'admin'")
+        
+        conn.commit()
+        
+    except Exception as e:
+        print(f"[!] Error in init_users_table: {e}")
+        import traceback
+        traceback.print_exc()
+    finally:
+        conn.close()
 
 def hash_password(password):
     """Hash password using pbkdf2_sha256"""
@@ -66,29 +155,128 @@ def create_default_user():
     conn.close()
     
     if user_count == 0:
+        default_password = os.getenv('HELLSUITE_DEFAULT_PASS', 'admin@2025_Nov')
         conn = get_db_connection()
-        password_hash = hash_password('admin@2025_Nov')
+        password_hash = hash_password(default_password)
         conn.execute(
-            'INSERT INTO users (username, password_hash) VALUES (?, ?)',
-            ('admin', password_hash)
+            'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
+            ('admin', password_hash, 'admin')
         )
         conn.commit()
         conn.close()
-        print("[+] Default user created: admin / admin@2025_Nov")
+        print(f"[+] Default admin user created: admin / {default_password} (role: admin)")
+        print("[!] Change default password in production!")
+    else:
+        print(f"[*] Users already exist: {user_count} users")
 
+# ============================================================================
+# ROLE-BASED ACCESS CONTROL SYSTEM
+# ============================================================================
+
+def role_required(required_role='viewer'):
+    """Decorator to require specific role"""
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            # 1. Check session
+            if 'user_id' not in session:
+                return redirect(url_for('login'))
+            
+            # 2. Get current user with role
+            conn = get_db_connection()
+            user = conn.execute(
+                'SELECT username, role FROM users WHERE id = ?',
+                (session['user_id'],)
+            ).fetchone()
+            conn.close()
+            
+            # 3. If user doesn't exist, clear session
+            if not user:
+                session.clear()
+                return redirect(url_for('login'))
+            
+            # 4. Role hierarchy check
+            role_hierarchy = {'viewer': 1, 'analyst': 2, 'admin': 3}
+            user_level = role_hierarchy.get(user['role'], 0)
+            required_level = role_hierarchy.get(required_role, 0)
+            
+            # 5. Permission check
+            if user_level < required_level:
+                print(f"[SECURITY] Access denied: {user['username']} ({user['role']}) tried to access {request.path} (required: {required_role})")
+                return render_template('error.html', 
+                    error="Access denied",
+                    details=f"Your role '{user['role']}' doesn't have permission for this action"
+                ), 403
+            
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
+# Backward compatibility decorator
 def login_required(f):
-    """Decorator to require login"""
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
+    """Login decorator (alias for viewer role)"""
+    return role_required('viewer')(f)
+
+# ============================================================================
+# USER REGISTRATION (DEBUG MODE ONLY)
+# ============================================================================
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """User registration page"""
+    # Use app configuration
+    if not app.config['ALLOW_REGISTER']:
+        return "Registration disabled. Set HELLSUITE_ALLOW_REGISTER=True in .env file", 403
+    
+    if request.method == 'POST':
+        username = request.form.get('username', '')[:50]
+        password = request.form.get('password', '')[:100]
+        role = request.form.get('role', 'viewer')
+        
+        if not username or not password:
+            return render_template('register.html', error='Username and password required')
+        
+        if len(password) < 8:
+            return render_template('register.html', error='Password must be at least 8 characters')
+        
+        # Validate role
+        if role not in ['viewer', 'analyst', 'admin']:
+            role = 'viewer'
+        
+        conn = get_db_connection()
+        
+        # Check if user exists
+        existing = conn.execute(
+            'SELECT id FROM users WHERE username = ?', (username,)
+        ).fetchone()
+        
+        if existing:
+            conn.close()
+            return render_template('register.html', error='Username already exists')
+        
+        # Create user
+        password_hash = hash_password(password)
+        conn.execute(
+            'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
+            (username, password_hash, role)
+        )
+        conn.commit()
+        conn.close()
+        
+        print(f"[+] User created: {username} (role: {role})")
+        return redirect(url_for('login'))
+    
+    # GET request - show registration form
+    return render_template('register.html')
+
+# ============================================================================
+# APPLICATION ROUTES WITH ROLE-BASED PERMISSIONS
+# ============================================================================
 
 @app.route('/')
-@login_required
+@role_required('viewer')
 def index():
-    """Main dashboard page"""
+    """Main dashboard page - accessible to all authenticated users"""
     conn = get_db_connection()
     
     projects_count = conn.execute('SELECT COUNT(*) FROM projects').fetchone()[0]
@@ -139,7 +327,7 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/projects')
-@login_required
+@role_required('analyst')  # Only analysts and admins
 def projects():
     """Projects list page"""
     conn = get_db_connection()
@@ -150,7 +338,7 @@ def projects():
     return render_template('projects.html', projects=projects)
 
 @app.route('/assets')
-@login_required
+@role_required('analyst')  # Only analysts and admins
 def assets():
     """Assets list page - filter by project if specified"""
     project_id = request.args.get('project', type=int)
@@ -185,7 +373,7 @@ def assets():
     return render_template('assets.html', assets=assets, project_name=project_name, project_id=project_id)
 
 @app.route('/vulnerabilities')
-@login_required
+@role_required('analyst')  # Only analysts and admins
 def vulnerabilities():
     """Vulnerabilities list page - filter by project if specified"""
     project_id = request.args.get('project', type=int)
@@ -241,7 +429,7 @@ def vulnerabilities():
                          project_id=project_id)
 
 @app.route('/api/stats')
-@login_required
+@role_required('viewer')  # All authenticated users
 def api_stats():
     """JSON API endpoint for dashboard stats"""
     conn = get_db_connection()
@@ -257,7 +445,7 @@ def api_stats():
     return jsonify(stats)
 
 @app.route('/asset/<int:asset_id>')
-@login_required
+@role_required('analyst')  # Only analysts and admins
 def asset_detail(asset_id):
     """Asset details page with all findings"""
     conn = get_db_connection()
@@ -307,8 +495,8 @@ def asset_detail(asset_id):
                          project_name=project['name'] if project else 'Unknown')
 
 @app.route('/project/<int:project_id>/report')
-@login_required
-def project_report(project_id):  # MISMO NOMBRE que la ruta vieja
+@role_required('viewer')  # All authenticated users
+def project_report(project_id):
     """Generate HTML report with unified dashboard design"""
     try:
         conn = get_db_connection()
@@ -377,6 +565,7 @@ def project_report(project_id):  # MISMO NOMBRE que la ruta vieja
         return f"Error generating report: {str(e)}", 500
 
 @app.route('/project/<int:project_id>/report/pdf')
+@role_required('viewer')  # All authenticated users
 def export_pdf(project_id):
     """Export PDF using dedicated PDF template"""
     try:
@@ -407,8 +596,51 @@ def export_pdf(project_id):
         print(f"[!] PDF export error: {e}")
         return "Error generating PDF", 500
 
+@app.route('/endpoints')
+@role_required('analyst')  # Only analysts and admins
+def endpoints():
+    """Endpoints management page"""
+    if 'user_id' not in session:
+        return redirect('/login')
+    
+    conn = get_db_connection()
+    
+    endpoints_data = conn.execute('''
+        SELECT 
+            e.id,
+            e.method,
+            e.path,
+            e.status_code,
+            e.asset_id,
+            a.url as asset_url,
+            p.name as project_name
+        FROM endpoints e
+        LEFT JOIN assets a ON e.asset_id = a.id
+        LEFT JOIN projects p ON a.project_id = p.id
+        ORDER BY e.id DESC
+    ''').fetchall()
+    
+    conn.close()
+    
+    return render_template('endpoints.html',
+                         endpoints=endpoints_data,
+                         page_title='Endpoints Management',
+                         stats_summary=f'Found {len(endpoints_data)} endpoints across all projects')
+
+@app.route('/reports')
+@role_required('viewer')  # All authenticated users
+def reports_list():
+    """List all projects with report links"""
+    conn = get_db_connection()
+    projects = conn.execute(
+        'SELECT * FROM projects ORDER BY created_date DESC'
+    ).fetchall()
+    conn.close()
+    
+    return render_template('reports_list.html', projects=projects)
+
 @app.route('/project/<int:project_id>/report/json')
-@login_required
+@role_required('analyst')  # Only analysts and admins (sensitive data)
 def export_pwndoc_json(project_id):
     """Export project data in Pwndoc-compatible JSON format"""
     try:
@@ -444,12 +676,12 @@ def export_pwndoc_json(project_id):
             SELECT * FROM assets WHERE project_id = ?
         ''', (project_id,)).fetchall()
         
-        # Primero, averiguar qué columnas tiene realmente la tabla assets
+        # First, find out what columns the assets table actually has
         cursor = conn.cursor()
         cursor.execute("PRAGMA table_info(assets)")
-        asset_columns = [col[1] for col in cursor.fetchall()]  # Nombre de columnas
+        asset_columns = [col[1] for col in cursor.fetchall()]  # Column names
         
-        print(f"[DEBUG] Columnas en tabla assets: {asset_columns}")
+        print(f"[DEBUG] Columns in assets table: {asset_columns}")
         
         conn.close()
         
@@ -531,7 +763,7 @@ def export_pwndoc_json(project_id):
             
             pwndoc_asset = {
                 "url": asset_dict.get('url', ''),
-                "ip": asset_dict.get('ip', ''),  # Esto ya no fallará aunque no exista
+                "ip": asset_dict.get('ip', ''),  # This won't fail even if column doesn't exist
                 "discovery_date": (asset_dict.get('discovery_date', '')[:10] 
                                   if asset_dict.get('discovery_date') 
                                   else ''),
@@ -552,117 +784,6 @@ def export_pwndoc_json(project_id):
         import traceback
         traceback.print_exc()
         return f"Error generating Pwndoc export: {str(e)}", 500
-
-@app.route('/endpoints')
-def endpoints():
-    if 'user_id' not in session:
-        return redirect('/login')
-    
-    conn = get_db_connection()
-    
-    endpoints_data = conn.execute('''
-        SELECT 
-            e.id,
-            e.method,
-            e.path,
-            e.status_code,
-            e.asset_id,
-            a.url as asset_url,
-            p.name as project_name
-        FROM endpoints e
-        LEFT JOIN assets a ON e.asset_id = a.id
-        LEFT JOIN projects p ON a.project_id = p.id
-        ORDER BY e.id DESC
-    ''').fetchall()
-    
-    conn.close()
-    
-    return render_template('endpoints.html',
-                         endpoints=endpoints_data,
-                         page_title='Endpoints Management',
-                         stats_summary=f'Found {len(endpoints_data)} endpoints across all projects')
-
-@app.route('/project/<int:project_id>/report')
-@login_required
-def project_report_html(project_id):
-    """Generate HTML report with unified dashboard design"""
-    try:
-        conn = get_db_connection()
-        
-        # Get project details
-        project = conn.execute(
-            'SELECT * FROM projects WHERE id = ?', (project_id,)
-        ).fetchone()
-        
-        if not project:
-            return "Project not found", 404
-        
-        # Get vulnerabilities count by severity
-        severity_rows = conn.execute('''
-            SELECT severity, COUNT(*) as count 
-            FROM vulnerabilities 
-            WHERE project_id = ? 
-            GROUP BY severity
-        ''', (project_id,)).fetchall()
-        
-        # Convert to dict for easy access
-        severity_counts = {}
-        for row in severity_rows:
-            severity_counts[row['severity']] = row['count']
-        
-        # Get critical vulnerabilities for executive summary
-        critical_vulns = conn.execute('''
-            SELECT * FROM vulnerabilities 
-            WHERE project_id = ? AND severity = 'critical'
-            ORDER BY cvss_score DESC
-            LIMIT 5
-        ''', (project_id,)).fetchall()
-        
-        # Get all vulnerabilities with asset info
-        vulnerabilities = conn.execute('''
-            SELECT v.*, a.url as asset_url 
-            FROM vulnerabilities v 
-            LEFT JOIN assets a ON v.asset_id = a.id 
-            WHERE v.project_id = ? 
-            ORDER BY 
-                CASE v.severity 
-                    WHEN 'critical' THEN 1
-                    WHEN 'high' THEN 2 
-                    WHEN 'medium' THEN 3
-                    WHEN 'low' THEN 4
-                    ELSE 5
-                END,
-                v.cvss_score DESC
-        ''', (project_id,)).fetchall()
-        
-        conn.close()
-        
-        return render_template('report_html.html',
-            project=project,
-            current_date=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            severity_counts=severity_counts,
-            critical_vulns=critical_vulns,
-            vulnerabilities=vulnerabilities,
-            project_id=project_id
-        )
-        
-    except Exception as e:
-        print(f"[!] Error generating HTML report: {e}")
-        import traceback
-        traceback.print_exc()
-        return f"Error generating report: {str(e)}", 500
-
-@app.route('/reports')
-@login_required
-def reports_list():
-    """List all projects with report links"""
-    conn = get_db_connection()
-    projects = conn.execute(
-        'SELECT * FROM projects ORDER BY created_date DESC'
-    ).fetchall()
-    conn.close()
-    
-    return render_template('reports_list.html', projects=projects)
 
 def generate_pdf_html(project_id):
     """Generate PDF report using the new unified template"""
@@ -733,14 +854,53 @@ def generate_pdf_html(project_id):
         traceback.print_exc()
         return f"<html><body>Error generating PDF: {str(e)}</body></html>"
 
+# ============================================================================
+# ADMIN ROUTES
+# ============================================================================
+
+@app.route('/admin/users')
+@role_required('admin')  # Only admins
+def manage_users():
+    """User management (admin only)"""
+    conn = get_db_connection()
+    users = conn.execute(
+        'SELECT id, username, role, created_date FROM users ORDER BY created_date DESC'
+    ).fetchall()
+    conn.close()
+    
+    return render_template('admin_users.html', users=users)
+
+# ============================================================================
+# ERROR HANDLERS
+# ============================================================================
+
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('error.html', error="Page not found"), 404
+
+@app.errorhandler(403)
+def forbidden_error(error):
+    return render_template('error.html', error="Access denied"), 403
+
+@app.errorhandler(500)
+def internal_error(error):
+    print(f"[!] Internal server error: {error}")
+    return render_template('error.html', error="Internal server error"), 500
+
+# ============================================================================
+# APPLICATION INITIALIZATION
+# ============================================================================
+
 # Initialize database on startup
-with app.app_context():
-    init_users_table()
-    create_default_user()
+init_users_table()
+create_default_user()
+
+print("[*] HellSsus Dashboard starting...")
+print("[*] Access at: http://localhost:5000")
+if app.config['DEBUG']:
+    print("[!] WARNING: Debug mode is ENABLED - Disable in production!")
+    if app.config['ALLOW_REGISTER']:
+        print("[!] WARNING: User registration is ENABLED")
 
 if __name__ == '__main__':
-    print("[*] Starting HellSsus Dashboard...")
-    print("[*] Access at: http://localhost:5000")
-    print("[*] Default credentials: admin / admin@2025_Nov")
-    print("[!] Change default password in production!")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=app.config['DEBUG'], host='0.0.0.0', port=5000)

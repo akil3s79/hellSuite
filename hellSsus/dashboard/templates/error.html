@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="page-header">
+        <h1 class="page-title">Access Denied</h1>
+        <p class="page-subtitle">You don't have permission to access this page</p>
+    </div>
+    
+    <div class="table-container">
+        <div style="padding: 40px; text-align: center;">
+            <div style="font-size: 5em; color: #A10202; margin-bottom: 20px;">
+                ⚠️
+            </div>
+            <h2 style="color: var(--dark-blue); margin-bottom: 15px;">
+                {{ error }}
+            </h2>
+            <p style="color: var(--gray); margin-bottom: 30px;">
+                Your role doesn't have sufficient permissions for this action.
+            </p>
+            <a href="/" class="btn" style="background: var(--dark-blue);">
+                Return to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

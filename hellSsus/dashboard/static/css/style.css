@@ -443,7 +443,9 @@ body {
     align-items: center;
     min-height: 100vh;
     background: var(--light-blue);
-    body:has(.login-wrapper) .sidebar {
+}
+
+body:has(.login-wrapper) .sidebar {
     display: none;
 }
 

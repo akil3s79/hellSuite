@@ -11,9 +11,6 @@
         <div class="sidebar-content">
             <div class="sidebar-header">
                 <h3>Menu</h3>
-                <a href="/reports" class="sidebar-link {% if request.path.startswith('/reports') %}active{% endif %}">
-                    📄 Reports
-                </a>
             </div>
             <div class="sidebar-links">
                 <a href="/" class="sidebar-link {% if request.path == '/' %}active{% endif %}">
@@ -30,6 +27,9 @@
                 </a>
                 <a href="/vulnerabilities" class="sidebar-link {% if request.path == '/vulnerabilities' %}active{% endif %}">
                     ⚠️ Vulnerabilities
+                </a>
+                <a href="/reports" class="sidebar-link {% if request.path.startswith('/reports') %}active{% endif %}">
+                <span>📄 Reports</span>
                 </a>
                 <a href="/logout" class="sidebar-link" style="margin-top: 20px; border-top: 1px solid var(--medium-blue); border-left: 1px solid var(--medium-blue); border-right: 1px solid var(--medium-blue); border-bottom: 1px solid var(--medium-blue); padding-top: 15px;">
                     🚪 Logout ({{ session.username }})

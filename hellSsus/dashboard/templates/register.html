@@ -1,0 +1,48 @@
+{% extends "base_login.html" %}
+
+{% block content %}
+<div class="login-wrapper">
+    <div class="login-container">
+        <div class="login-header">
+            <h2>HellSuite Registration</h2>
+            <p>Create new user account</p>
+        </div>
+        
+        {% if error %}
+        <div class="alert-error">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <form method="POST" class="login-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password (min 8 characters)</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="role">Role</label>
+                <select id="role" name="role" style="padding: 14px; border: 2px solid var(--dark-blue); border-radius: 6px; font-size: 1em;">
+                    <option value="viewer">Viewer (read-only)</option>
+                    <option value="analyst">Analyst (scan & view)</option>
+                    <option value="admin">Admin (full access)</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn-login-submit">Register</button>
+        </form>
+        
+        <div class="login-footer">
+            <p>Already have an account? <a href="{{ url_for('login') }}" style="color: var(--medium-blue); font-weight: bold;">Back to Login</a></p>
+            <p style="font-size: 0.8em; color: #718096; margin-top: 10px;">
+                Note: Registration is only available when ALLOW_REGISTER=True in .env file.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
