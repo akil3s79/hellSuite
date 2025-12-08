@@ -39,35 +39,36 @@ python -m playwright install
 Edit .env with your configuration
 
 ### Configuration
-
 Edit `.env` file:
-
+```
 HELLSUITE_SECRET_KEY=your-super-secret-key-change-this
 HELLSUITE_DEBUG=False
 HELLSUITE_ALLOW_REGISTER=False  # Disable in production!
 HELLSUITE_DEFAULT_PASS=your-strong-password-here
-
+```
 ### Running
 
 ### Start the dashboard
+```
 cd hellSsus/dashboard
-
 python app.py
-
+```
 ### Access the dashboard at: http://localhost:5000
 ### Default credentials: admin / (password from HELLSUITE_DEFAULT_PASS)
 
 ### Running Scans
 
 ### Full scan
+```
 cd hellSsus
-
 python orchestrate.py http://example.com --project "MyProject" --tools all
-
+```
 ### Specific tools only
+```
 python orchestrate.py http://example.com --project "Test" --tools recon,fuzz
-
+```
 ## Project Structure
+```
 hellSuite/
 ├── hellSsus/ # Main application
 │ ├── dashboard/ # Flask web interface
@@ -82,7 +83,7 @@ hellSuite/
 │ └── hellScanner/ # Vulnerability scanner
 ├── shared_data/ # Scans, reports, wordlists
 └── logs/ # Application logs (auto-generated)
-
+```
 ## Dashboard Features
 
 - **Dashboard Overview** - Statistics and recent projects
