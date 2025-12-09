@@ -27,7 +27,7 @@
 ### Installation
 
 Clone the repository
-git clone https://github.com/yourusername/hellsuite.git
+git clone https://github.com/akil3s79/hellSuite.git
 cd hellsuite
 
 Install dependencies
