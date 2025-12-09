@@ -18,7 +18,7 @@ from utils.error_handler import (
     retry, validate_url, log_error_with_context
 )
 from utils.decorators import (
-    log_execution, validate_target_url, require_kwargs, cached
+    log_execution, validate_target_url, cached
 )
 
 DATABASE_PATH = hellconfig.DATABASE_PATH
