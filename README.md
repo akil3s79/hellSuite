@@ -24,6 +24,22 @@
 - Git
 - Modern web browser
 
+### First Run
+After installation, run these commands:
+### Initialize database
+```
+cd hellSsus/database
+python init_database.py
+```
+### Run migrations (if any)
+```
+python migrate.py
+```
+### Start the dashboard
+```
+cd ../dashboard
+python app.py
+```
 ### Installation
 
 Clone the repository
@@ -31,11 +47,11 @@ Clone the repository
 git clone https://github.com/akil3s79/hellSuite.git
 cd hellsuite
 ```
-Install dependencies
+### Install dependencies
 ```
 pip install -r requirements.txt
 ```
-Install Playwright for PDF generation
+### Install Playwright for PDF generation
 ```
 python -m playwright install
 ```
