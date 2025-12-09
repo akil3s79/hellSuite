@@ -27,11 +27,12 @@ def init_database():
     
     # Create projects table
     cursor.execute('''
-        CREATE TABLE projects (
+        CREATE TABLE IF NOT EXISTS projects (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            created_date TEXT,
-            description TEXT
+            name VARCHAR(100) NOT NULL,
+            description TEXT,
+            created_date DATETIME DEFAULT CURRENT_TIMESTAMP,  # ← ESTA LÍNEA
+            target_url VARCHAR(500)
         )
     ''')
     

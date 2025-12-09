@@ -24,9 +24,25 @@
 - Git
 - Modern web browser
 
+### First Run
+
+After installation, run these commands:
+
+```
+# Initialize database
+cd hellSsus/database
+python init_database.py
+
+# Run migrations (if any)
+python migrate.py
+
+# Start the dashboard
+cd ../dashboard
+python app.py
+
 ### Installation
 
-````bash`
+```
 
 # Clone the repository
 git clone https://github.com/yourusername/hellsuite.git

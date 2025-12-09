@@ -33,7 +33,7 @@ class HellReconAdapter:
         
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO projects (name, description) VALUES (?, ?)",
+            "INSERT INTO projects (name, description, created_date) VALUES (?, ?, datetime('now'))",
             (project_name, description)
         )
         project_id = cursor.lastrowid

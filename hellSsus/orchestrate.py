@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 import traceback
+import sqlite3 
 
 # Import new logging and error handling
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -18,7 +19,7 @@ from utils.error_handler import (
     retry, validate_url, log_error_with_context
 )
 from utils.decorators import (
-    log_execution, validate_target_url, require_kwargs, cached
+    log_execution, validate_target_url, cached
 )
 
 DATABASE_PATH = hellconfig.DATABASE_PATH
@@ -146,37 +147,53 @@ def run_hellfuzzer(target, output_file, wordlist="common.txt"):
 def run_hellscanner(target, output_file, project_name, project_id):
     """Run HellScanner with retry logic"""
     try:
-        orchestrate_logger.info(f"Running HellScanner for project: {project_name}")
+        orchestrate_logger.info(f"Running HellScanner for project: {project_name} (ID: {project_id})")
         
+        # IMPORTANTE: Usamos --project y --url para integración con HellSuite
         hellscanner_cmd = [
             sys.executable, 
             HELLSCANNER_PATH,
             "--project", project_name,
             "--url", target,
-            "--silent"
+            "--verbose"  # Para ver lo que está pasando
         ]
+        
+        orchestrate_logger.info(f"Command: {' '.join(hellscanner_cmd)}")
         
         # Run HellScanner
         result = subprocess.run(
             hellscanner_cmd, 
             capture_output=True, 
             text=True,
-            timeout=180  # 3 minute timeout
+            timeout=300  # 5 minute timeout
         )
+        
+        orchestrate_logger.info(f"HellScanner stdout: {result.stdout[:500]}...")
+        if result.stderr:
+            orchestrate_logger.warning(f"HellScanner stderr: {result.stderr[:500]}...")
         
         if result.returncode == 0:
             orchestrate_logger.info("HellScanner completed successfully")
-            # Check for any warnings in stderr
-            if result.stderr:
-                orchestrate_logger.warning(f"HellScanner stderr: {result.stderr[:200]}")
-            return True
+            
+            # Verificar que se hayan insertado vulnerabilidades
+            conn = sqlite3.connect(DATABASE_PATH)
+            cursor = conn.cursor()
+            cursor.execute(
+                'SELECT COUNT(*) FROM vulnerabilities WHERE project_id = ?',
+                (project_id,)
+            )
+            vuln_count = cursor.fetchone()[0]
+            conn.close()
+            
+            orchestrate_logger.info(f"HellScanner found {vuln_count} vulnerabilities in database")
+            return vuln_count > 0
+            
         else:
             orchestrate_logger.error(f"HellScanner failed (code: {result.returncode})")
-            orchestrate_logger.error(f"Stderr: {result.stderr[:500]}")
             return False
             
     except subprocess.TimeoutExpired:
-        orchestrate_logger.error("HellScanner timed out after 3 minutes")
+        orchestrate_logger.error("HellScanner timed out after 5 minutes")
         raise TimeoutError("HellScanner execution timed out")
     except Exception as e:
         orchestrate_logger.error(f"Error running HellScanner: {e}")
@@ -237,6 +254,42 @@ def import_tool_results(tool_name, target, output_file, project_id):
             
             adapter = hellfuzzer_module.HellFuzzerAdapter()
             success = adapter.import_scan(output_file, project_id=project_id)
+            
+        elif tool_name == "hellscanner":
+            # HellScanner es especial - ya exporta directamente a la BD
+            # Solo verificamos que haya datos en la tabla vulnerabilities
+            conn = sqlite3.connect(DATABASE_PATH)
+            cursor = conn.cursor()
+            
+            # Contar vulnerabilidades para este proyecto
+            cursor.execute(
+                'SELECT COUNT(*) FROM vulnerabilities WHERE project_id = ?',
+                (project_id,)
+            )
+            vuln_count = cursor.fetchone()[0]
+            conn.close()
+            
+            if vuln_count > 0:
+                orchestrate_logger.info(f"HellScanner found {vuln_count} vulnerabilities")
+                success = True
+            else:
+                # Verificar si HellScanner ya corrió pero no encontró vulnerabilidades
+                # Revisando si hay asset para este proyecto (HellScanner crea asset si encuentra algo)
+                conn = sqlite3.connect(DATABASE_PATH)
+                cursor = conn.cursor()
+                cursor.execute(
+                    'SELECT COUNT(*) FROM assets WHERE project_id = ?',
+                    (project_id,)
+                )
+                asset_count = cursor.fetchone()[0]
+                conn.close()
+                
+                if asset_count > 0:
+                    orchestrate_logger.info("HellScanner executed but found no vulnerabilities")
+                    success = True
+                else:
+                    orchestrate_logger.warning("HellScanner may not have executed properly")
+                    success = False
             
         else:
             orchestrate_logger.error(f"Unknown tool for import: {tool_name}")
@@ -317,11 +370,19 @@ def main():
     if 'scanner' in args.tools or 'all' in args.tools:
         tools_run += 1
         scanner_output = get_scan_path("hellscanner", args.target)
-        if import_tool_results("hellscanner", args.target, scanner_output, project_id):
-            tools_success += 1
-            orchestrate_logger.info("HellScanner completed and data imported")
+        
+        orchestrate_logger.info("Executing HellScanner...")
+        scanner_success = run_hellscanner(args.target, scanner_output, args.project, project_id)
+        
+        if scanner_success:
+
+            if import_tool_results("hellscanner", args.target, scanner_output, project_id):
+                tools_success += 1
+                orchestrate_logger.info("HellScanner completed and data imported")
+            else:
+                orchestrate_logger.error("HellScanner import failed")
         else:
-            orchestrate_logger.error("HellScanner failed")
+            orchestrate_logger.error("HellScanner execution failed")
     
     # Summary
     orchestrate_logger.info(f"HellSuite scan completed: {tools_success}/{tools_run} tools succeeded")
