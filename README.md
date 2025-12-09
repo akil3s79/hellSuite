@@ -27,19 +27,20 @@
 ### Installation
 
 Clone the repository
+```
 git clone https://github.com/akil3s79/hellSuite.git
 cd hellsuite
-
+```
 Install dependencies
+```
 pip install -r requirements.txt
-
+```
 Install Playwright for PDF generation
+```
 python -m playwright install
-
-Edit .env with your configuration
-
+```
 ### Configuration
-Edit `.env` file:
+Edit .env file:
 ```
 HELLSUITE_SECRET_KEY=your-super-secret-key-change-this
 HELLSUITE_DEBUG=False
