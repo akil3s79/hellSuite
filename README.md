@@ -1,4 +1,4 @@
-# HellSuite v4.2 - Pentesting Orchestration Platform
+# HellSuite beta 0.9 - Pentesting Orchestration Platform
 
 **Professional Security Testing Suite with Web Dashboard, Automated Scanning, and Reporting**
 
@@ -25,72 +25,67 @@
 - Modern web browser
 
 ### First Run
-
 After installation, run these commands:
-
+### Initialize database
 ```
-# Initialize database
 cd hellSsus/database
 python init_database.py
-
-# Run migrations (if any)
+```
+### Run migrations (if any)
+```
 python migrate.py
-
-# Start the dashboard
+```
+### Start the dashboard
+```
 cd ../dashboard
 python app.py
-
+```
 ### Installation
 
+Clone the repository
 ```
-
-# Clone the repository
-git clone https://github.com/yourusername/hellsuite.git
+git clone https://github.com/akil3s79/hellSuite.git
 cd hellsuite
-
-# Install dependencies
+```
+### Install dependencies
+```
 pip install -r requirements.txt
-
-# Install Playwright for PDF generation
+```
+### Install Playwright for PDF generation
+```
 python -m playwright install
-
-# Edit .env with your configuration
-````
-
+```
 ### Configuration
-
-Edit `.env` file:
-
-<- INICIO BLOQUE BASH
+Edit .env file:
+```
 HELLSUITE_SECRET_KEY=your-super-secret-key-change-this
 HELLSUITE_DEBUG=False
 HELLSUITE_ALLOW_REGISTER=False  # Disable in production!
 HELLSUITE_DEFAULT_PASS=your-strong-password-here
-<- FIN BLOQUE BASH
-
+```
 ### Running
 
-<- INICIO BLOQUE BASH
-# Start the dashboard
+### Start the dashboard
+```
 cd hellSsus/dashboard
 python app.py
-
-# Access the dashboard at: http://localhost:5000
-# Default credentials: admin / (password from HELLSUITE_DEFAULT_PASS)
-<- FIN BLOQUE BASH
+```
+### Access the dashboard at: http://localhost:5000
+### Default credentials: admin / (password from HELLSUITE_DEFAULT_PASS)
 
 ### Running Scans
 
-<- INICIO BLOQUE BASH
-# Full scan
+### Full scan
+```
 cd hellSsus
 python orchestrate.py http://example.com --project "MyProject" --tools all
-
-# Specific tools only
+```
+### Specific tools only
+```
 python orchestrate.py http://example.com --project "Test" --tools recon,fuzz
-<- FIN BLOQUE BASH
-
+```
 ## Project Structure
+```
 hellSuite/
 ├── hellSsus/ # Main application
 │ ├── dashboard/ # Flask web interface
@@ -105,8 +100,7 @@ hellSuite/
 │ └── hellScanner/ # Vulnerability scanner
 ├── shared_data/ # Scans, reports, wordlists
 └── logs/ # Application logs (auto-generated)
-
-
+```
 ## Dashboard Features
 
 - **Dashboard Overview** - Statistics and recent projects
@@ -213,10 +207,11 @@ HellSuite is for **authorized security testing only**. Use only on systems you o
 
 ## Acknowledgments
 
-- The HellSuite development team
 - Security community contributors
 - Open source tools that make this possible
 
----
+## Contributing
+Found a bug? Have a feature request? Feel free to open an issue or pull request!
 
-**Happy (ethical) hacking!** 🔐
+## You can buy me a coffe if you want!
+<a href="https://www.buymeacoffee.com/akil3s1979" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/default-orange.png" alt="Buy Me A Coffee" height="27" width="104"></a>
