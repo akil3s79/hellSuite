@@ -1,0 +1,9 @@
+[submodule "hellFuzzer"]
+    path = tools/hellFuzzer
+    url = https://github.com/akil3s79/hellFuzzer.git
+[submodule "hellRecon"]
+    path = tools/hellRecon
+    url = https://github.com/akil3s79/hellRecon.git
+[submodule "hellScanner"]
+    path = tools/hellScanner
+    url = https://github.com/akil3s79/hellScanner.git
