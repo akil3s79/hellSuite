@@ -31,7 +31,7 @@ def init_database():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name VARCHAR(100) NOT NULL,
             description TEXT,
-            created_date DATETIME DEFAULT CURRENT_TIMESTAMP,  # ← ESTA LÍNEA
+            created_date DATETIME DEFAULT CURRENT_TIMESTAMP,
             target_url VARCHAR(500)
         )
     ''')
