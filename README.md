@@ -17,7 +17,14 @@
 - **Logging & Monitoring** - Professional logging with rotation and redaction
 - **Security First** - Input validation, error handling, secure defaults
 
-## Quick Start
+# Quick Start
+### Option 1: Git Clone (RECOMMENDED)
+```bash
+git clone --recursive https://github.com/akil3s79/hellSuite.git
+cd hellSuite
+```
+
+### If you download the .zip file, you will not get the tools as they are submodules. Therefore, we strongly recommend that you use the option to clone the repository.
 
 ### Prerequisites
 - Python 3.9+
