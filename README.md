@@ -9,23 +9,24 @@ beta 0.9**
 ---
 
 ## Table of Contents
-- [Features](#-features)
-- [Dashboard Overview](#-dashboard-overview)
-- [Quick Start](#-quick-start)
+- [Features](#features)
+- [Dashboard Overview](#dashboard-overview)
+- [Quick Start](#quick-start)
     - [Prerequisites](#prerequisites)
     - [Installation](#installation)
     - [Your First Scan](#your-first-scan)
-- [Orchestrator Usage](#-orchestrator-usage)
-- [Integrated Tools](#-integrated-tools)
-    - [HellRecon](#hellrecon-technology-intelligence-scanner)
-    - [HellFuzzer](#hellfuzzer-directory-and-file-fuzzer)
-    - [HellScanner](#hellscanner-vulnerability-scanner)
-    - [Nuclei Scanner](#nuclei-scanner-vulnerability-scanning-engine)
-- [Project Structure](#-project-structure)
-- [Database & Reporting](#-database--reporting)
-- [Contributing](#-contributing)
-- [Security Policy](#-security-policy)
-- [License](#-license)
+- [Orchestrator Usage](#orchestrator-usage)
+- [Integrated Tools](#integrated-tools)
+    - [HellRecon: Technology Intelligence Scanner](#hellrecon-technology-intelligence-scanner)
+    - [HellFuzzer: Directory and File Fuzzer](#hellfuzzer-directory-and-file-fuzzer)
+    - [HellScanner: Vulnerability Scanner](#hellscanner-vulnerability-scanner)
+    - [Nuclei Scanner: Vulnerability Scanning Engine](#nuclei-scanner-vulnerability-scanning-engine)
+- [Project Structure](#project-structure)
+- [Database & Reporting](#database--reporting)
+- [Screenshots](#screenshots)
+- [Contributing](#contributing)
+- [Security Policy](#security-policy)
+- [License](#license)
 
 ---
 
