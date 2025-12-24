@@ -8,28 +8,28 @@ beta 0.9**
 
 ---
 
-## 📋 Table of Contents
-- [✨ Features](#-features)
-- [🖥 Dashboard Overview](#-dashboard-overview)
-- [🚀 Quick Start](#-quick-start)
+## Table of Contents
+- [Features](#-features)
+- [Dashboard Overview](#-dashboard-overview)
+- [Quick Start](#-quick-start)
     - [Prerequisites](#prerequisites)
     - [Installation](#installation)
     - [Your First Scan](#your-first-scan)
-- [🔧 Orchestrator Usage](#-orchestrator-usage)
-- [🛠 Integrated Tools](#-integrated-tools)
+- [Orchestrator Usage](#-orchestrator-usage)
+- [Integrated Tools](#-integrated-tools)
     - [HellRecon](#hellrecon-technology-intelligence-scanner)
     - [HellFuzzer](#hellfuzzer-directory-and-file-fuzzer)
     - [HellScanner](#hellscanner-vulnerability-scanner)
     - [Nuclei Scanner](#nuclei-scanner-vulnerability-scanning-engine)
-- [🗃 Project Structure](#-project-structure)
-- [📊 Database & Reporting](#-database--reporting)
-- [🤝 Contributing](#-contributing)
-- [🔒 Security Policy](#-security-policy)
-- [📄 License](#-license)
+- [Project Structure](#-project-structure)
+- [Database & Reporting](#-database--reporting)
+- [Contributing](#-contributing)
+- [Security Policy](#-security-policy)
+- [License](#-license)
 
 ---
 
-## ✨ Features
+## Features
 
 hellSuite is designed for security professionals and red teams who need efficiency and consistency. It integrates multiple scanning phases into a cohesive system.
 
@@ -46,7 +46,7 @@ hellSuite is designed for security professionals and red teams who need efficien
 
 ---
 
-## 🖥 Dashboard Overview
+## Dashboard Overview
 
 The dashboard provides a central hub for all security assessment activities.
 
@@ -62,7 +62,7 @@ Access it at `http://localhost:5000` after starting the Flask server.
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 *   **Python 3.9+**
@@ -75,7 +75,7 @@ Access it at `http://localhost:5000` after starting the Flask server.
 1.  **Clone the repository:**
 
 ```
-git clone https://github.com/your-username/hellSuite.git --depth 1
+git clone https://github.com/akil3s79/hellSuite.git --depth 1
 cd hellSuite
 ```
 
@@ -125,14 +125,14 @@ Results will be automatically imported and visible in the dashboard.
 
 ---
 
-## 🔧 Orchestrator Usage
+## Orchestrator Usage
 
 The `orchestrate.py` script is the command center for automated scans.
 
 ### Basic Syntax:
 
 ```
-python orchestrate.py &lt;TARGET_URL&gt; --project "&lt;PROJECT_NAME&gt;" [--tools TOOL_LIST] [OPTIONS]
+python orchestrate.py <TARGET_URL> --project "<PROJECT_NAME>" [--tools TOOL_LIST] [OPTIONS]
 ```
 
 ### Common Examples:
@@ -162,13 +162,13 @@ optional arguments:
 
 ---
 
-## 🛠 Integrated Tools
+## Integrated Tools
 
 ### HellRecon: Technology Intelligence Scanner
 Discovers technologies, frameworks, and services running on the target.
 
 **Usage:**  
-```python tools/hellRecon/hellRecon.py &lt;TARGET&gt; --report-format json -o output.json```
+```python tools/hellRecon/hellRecon.py <TARGET> --report-format json -o output.json```
 
 **Key Features**: Identifies web servers, CMS, JavaScript libraries, and security headers.
 
@@ -178,7 +178,7 @@ Discovers technologies, frameworks, and services running on the target.
 Discovers hidden directories, files, and endpoints using wordlists.
 
 **Usage:**  
-```python tools/hellFuzzer/hellFuzzer.py &lt;TARGET&gt; &lt;WORDLIST&gt; --format json --ci```
+```python tools/hellFuzzer/hellFuzzer.py <TARGET> <WORDLIST> --format json --ci```
 
 **Key Features**: Multi-threaded, recursive scanning, configurable filters for status codes and response sizes.
 
@@ -204,7 +204,7 @@ Leverages the power of ProjectDiscovery's Nuclei with thousands of community-pow
 
 ---
 
-## 🗃 Project Structure
+## Project Structure
 
 ```
 hellSuite/
@@ -232,7 +232,7 @@ hellSuite/
 
 ---
 
-## 📊 Database & Reporting
+## Database & Reporting
 
 All tool findings are parsed and imported into a unified SQLite database (`hellSsus/database/hellSsus.db`) via dedicated adapters in `hellSsus/integrations/`.
 
@@ -255,7 +255,7 @@ All tool findings are parsed and imported into a unified SQLite database (`hellS
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please follow these steps:
 
@@ -272,7 +272,7 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-## 🔒 Security Policy
+## Security Policy
 
 We take the security of hellSuite and its users seriously.
 
@@ -287,7 +287,7 @@ If you believe you have found a security issue in hellSuite, please report it re
 
 ---
 
-## 📄 License
+## License
 
 Distributed under the MIT License. See the `LICENSE` file for more information.
 
@@ -295,7 +295,7 @@ This means you are free to use, modify, and distribute this software, provided a
 
 ---
 
-**Happy (and responsible) hacking! 🔍**
+**Happy (and responsible) hacking!**
 
 *For educational and authorized security testing purposes only.*
 
