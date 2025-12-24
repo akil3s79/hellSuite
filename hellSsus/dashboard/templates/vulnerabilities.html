@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Vulnerabilities</h1>
+    <p class="page-subtitle">Unified Security Assessment Platform</p>
+    {% if project_name %}
+    <p class="page-subtitle">Project: {{ project_name }}</p>
+    {% endif %}
+</div>
+
+<div class="table-container">
+
+    <div style="background: var(--dark-blue); color: white; padding: 12px 15px; border-radius: 6px 6px 0 0; font-weight: bold;">
+        Vulnerabilities Found ({{ vulnerabilities|length }})
+    </div>
+    
+    <div style="padding: 20px;">
+        {% if vulnerabilities %}
+        <div class="severity-stats">
+            {% set critical = vulnerabilities|selectattr('severity', 'equalto', 'critical')|list %}
+            {% set high = vulnerabilities|selectattr('severity', 'equalto', 'high')|list %}
+            {% set medium = vulnerabilities|selectattr('severity', 'equalto', 'medium')|list %}
+            {% set low = vulnerabilities|selectattr('severity', 'equalto', 'low')|list %}
+            
+            <div class="severity-badges">
+                <span class="severity-badge severity-critical">Critical: {{ critical|length }}</span>
+                <span class="severity-badge severity-high">High: {{ high|length }}</span>
+                <span class="severity-badge severity-medium">Medium: {{ medium|length }}</span>
+                <span class="severity-badge severity-low">Low: {{ low|length }}</span>
+            </div>
+        </div>
+
+        {% for vuln in vulnerabilities %}
+        <div class="vulnerability-item severity-{{ vuln.severity }}">
+            <div class="vuln-header">
+                <span class="vuln-severity severity-{{ vuln.severity.lower() }}">{{ vuln.severity.upper() }}</span>
+                <strong class="vuln-type">{{ vuln.type }}</strong>
+                {% if vuln.cve %}
+                <span class="vuln-cve">{{ vuln.cve }}</span>
+                {% endif %}
+            </div>
+            
+            <div class="vuln-description">
+                {{ vuln.description }}
+            </div>
+            
+            <div class="vuln-details">
+                {% if vuln.asset_url %}
+                <div><strong>Asset:</strong> {{ vuln.asset_url }}</div>
+                {% endif %}
+                {% if vuln.project_name %}
+                <div><strong>Project:</strong> {{ vuln.project_name }}</div>
+                {% endif %}
+                <div><strong>Discovered:</strong> {{ vuln.discovery_date }}</div>
+                
+                {% if vuln.proof_of_concept %}
+                <div class="vuln-poc">
+                    <strong>Proof of Concept:</strong> 
+                    <code>{{ vuln.proof_of_concept }}</code>
+                </div>
+                {% endif %}
+                
+                {% if vuln.recommendation %}
+                <div class="vuln-recommendation">
+                    <strong>Recommendation:</strong> {{ vuln.recommendation }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% else %}
+        <div class="no-vulnerabilities">
+            <p>No vulnerabilities found.</p>
+            <p>Run a scan with HellScanner to discover vulnerabilities.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

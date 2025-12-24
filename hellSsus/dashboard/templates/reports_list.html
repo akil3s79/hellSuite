@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Security Reports</h1>
+    <p class="page-subtitle">Generate and export assessment reports</p>
+</div>
+
+<div class="table-container">
+    <div style="background: var(--dark-blue); color: white; padding: 12px 15px; border-radius: 6px 6px 0 0; font-weight: bold;">
+        Available Reports
+    </div>
+    
+    <div style="padding: 20px;">
+        {% for project in projects %}
+        <div class="project-item">
+            <div class="project-info">
+                <strong>{{ project.name }}</strong>
+                <div class="project-details">
+                    <small>ID: {{ project.id }} | Created: {{ project.created_date[:16] if project.created_date else 'N/A' }}</small>
+                    {% if project.description %}
+                    <br><small>{{ project.description[:100] }}{% if project.description|length > 100 %}...{% endif %}</small>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="project-actions">
+                <a href="/project/{{ project.id }}/report" class="btn-view" style="background: #A10202;">
+                    📄 View Report
+                </a>
+                <a href="/project/{{ project.id }}/report/pdf" class="btn-view" style="background: var(--dark-blue); margin-left: 8px;">
+                    ⬇️ Export PDF
+                </a>
+            </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

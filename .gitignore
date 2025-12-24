@@ -1,0 +1,164 @@
+# ============================================
+# HELLSUITE SPECIFIC IGNORES
+# ============================================
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+/database/*.db
+/hellSsus/database/*.db
+
+# Environment and configuration files
+.env
+.env.local
+.env.*.local
+
+# Log files
+logs/
+*.log
+hellSsus/logs/*
+
+# Python cache and build files
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Unit test / coverage
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.spyderproject
+.spyproject
+.ropeproject
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+/tmp/
+/temp/
+
+# ============================================
+# HELLSUITE DATA MANAGEMENT
+# ============================================
+
+# Scan results - keep directory structure but not files
+shared_data/scans/*
+!shared_data/scans/.gitkeep
+
+# Reports - keep directory structure but not files  
+shared_data/reports/*
+!shared_data/reports/.gitkeep
+
+# Wordlists - exclude large files but keep common.txt
+shared_data/wordlists/*
+!shared_data/wordlists/.gitkeep
+!shared_data/wordlists/common.txt
+
+# Playwright browsers (can be large)
+ms-playwright/
+
+# ============================================
+# STANDARD PYTHON IGNORES
+# ============================================
+
+# Distribution / packaging
+.eggs/
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+pdm.lock
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+
+# Pyre
+.pyre/
+
+# pytype
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyPI config
+.pypirc
+
+# Cursor AI
+.cursorignore
+.cursorindexingignore
+
+# Ruff cache
+.ruff_cache/

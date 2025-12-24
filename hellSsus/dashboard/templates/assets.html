@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Assets</h1>
+    <p>Unified Security Assessment Platform</p>
+    {% if project_name %}
+        <p class="page-subtitle">Project: <strong>{{ project_name }}</strong></p>
+    {% endif %}
+</div>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>URL</th>
+                <th>Discovery Date</th>
+                <th>Project</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for asset in assets %}
+            <tr>
+                <td>{{ asset.id }}</td>
+                <td class="url-cell">{{ asset.url }}</td>
+                <td>{{ asset.discovery_date[:16] if asset.discovery_date else 'N/A' }}</td>
+                <td>{{ asset.project_name if asset.project_name else 'N/A' }}</td>
+                <td>
+                    <a href="{{ url_for('asset_detail', asset_id=asset.id) }}" class="btn-view">View Details</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" class="no-data">No assets found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

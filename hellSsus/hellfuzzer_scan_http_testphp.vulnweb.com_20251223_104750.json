@@ -1,0 +1,137 @@
+{
+  "name": "hellFuzzer Scan - http://testphp.vulnweb.com",
+  "scope": [
+    "http://testphp.vulnweb.com"
+  ],
+  "createdAt": "2025-12-23T10:47:50.616726",
+  "startDate": "2025-12-23T10:47:20.530971",
+  "endDate": "2025-12-23T10:47:50.616726",
+  "findings": [
+    {
+      "name": "Discovered /CVS/Entries",
+      "description": "Path /CVS/Entries returned status 200",
+      "severity": "info",
+      "references": [
+        "http://testphp.vulnweb.com/CVS/Entries"
+      ],
+      "status": "open"
+    },
+    {
+      "name": "Discovered /CVS/Repository",
+      "description": "Path /CVS/Repository returned status 200",
+      "severity": "info",
+      "references": [
+        "http://testphp.vulnweb.com/CVS/Repository"
+      ],
+      "status": "open"
+    },
+    {
+      "name": "Discovered /CVS/Root",
+      "description": "Path /CVS/Root returned status 200 - Categorized as ADMIN (MEDIUM)",
+      "severity": "medium",
+      "references": [
+        "http://testphp.vulnweb.com/CVS/Root"
+      ],
+      "status": "open"
+    },
+    {
+      "name": "Discovered /CVS",
+      "description": "Path /CVS returned status 301",
+      "severity": "info",
+      "references": [
+        "http://testphp.vulnweb.com/CVS"
+      ],
+      "status": "open"
+    },
+    {
+      "name": "Discovered /admin",
+      "description": "Path /admin returned status 301 - Categorized as ADMIN (MEDIUM)",
+      "severity": "medium",
+      "references": [
+        "http://testphp.vulnweb.com/admin"
+      ],
+      "status": "open"
+    },
+    {
+      "name": "Discovered /cgi-bin",
+      "description": "Path /cgi-bin returned status 403",
+      "severity": "info",
+      "references": [
+        "http://testphp.vulnweb.com/cgi-bin"
+      ],
+      "status": "open"
+    },
+    {
+      "name": "Discovered /cgi-bin/",
+      "description": "Path /cgi-bin/ returned status 403",
+      "severity": "info",
+      "references": [
+        "http://testphp.vulnweb.com/cgi-bin/"
+      ],
+      "status": "open"
+    },
+    {
+      "name": "Discovered /crossdomain.xml",
+      "description": "Path /crossdomain.xml returned status 200",
+      "severity": "info",
+      "references": [
+        "http://testphp.vulnweb.com/crossdomain.xml"
+      ],
+      "status": "open"
+    },
+    {
+      "name": "Discovered /favicon.ico",
+      "description": "Path /favicon.ico returned status 200",
+      "severity": "info",
+      "references": [
+        "http://testphp.vulnweb.com/favicon.ico"
+      ],
+      "status": "open"
+    },
+    {
+      "name": "Discovered /images",
+      "description": "Path /images returned status 301",
+      "severity": "info",
+      "references": [
+        "http://testphp.vulnweb.com/images"
+      ],
+      "status": "open"
+    },
+    {
+      "name": "Discovered /index.php",
+      "description": "Path /index.php returned status 200",
+      "severity": "info",
+      "references": [
+        "http://testphp.vulnweb.com/index.php"
+      ],
+      "status": "open"
+    },
+    {
+      "name": "Discovered /pictures",
+      "description": "Path /pictures returned status 301",
+      "severity": "info",
+      "references": [
+        "http://testphp.vulnweb.com/pictures"
+      ],
+      "status": "open"
+    },
+    {
+      "name": "Discovered /secured",
+      "description": "Path /secured returned status 301",
+      "severity": "info",
+      "references": [
+        "http://testphp.vulnweb.com/secured"
+      ],
+      "status": "open"
+    },
+    {
+      "name": "Discovered /vendor",
+      "description": "Path /vendor returned status 301",
+      "severity": "info",
+      "references": [
+        "http://testphp.vulnweb.com/vendor"
+      ],
+      "status": "open"
+    }
+  ]
+}

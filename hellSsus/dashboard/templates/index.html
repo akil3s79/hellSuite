@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- HEADER PRINCIPAL -->
+    <div class="header">
+        <h1>HellSsus Dashboard</h1>
+        <p>Unified Security Assessment Platform</p>
+    </div>
+
+    <!-- STATS CARDS -->
+    <div class="stats">
+        <div class="stat-card">
+            <div class="stat-number">{{ projects_count }}</div>
+            <div class="stat-label">Projects</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ assets_count }}</div>
+            <div class="stat-label">Assets</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ endpoints_count }}</div>
+            <div class="stat-label">Endpoints Found</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ vulnerabilities_count }}</div>
+            <div class="stat-label">Vulnerabilities</div>
+        </div>
+    </div>
+
+    <!-- RECENT PROJECTS -->
+    <div class="table-container" style="margin-top: 30px;">
+        <div style="background: var(--dark-blue); color: white; padding: 12px 15px; border-radius: 6px 6px 0 0; font-weight: bold;">
+            Recent Projects
+        </div>
+        <div style="padding: 20px;">
+            {% for project in recent_projects %}
+            <div class="project-item">
+                <div class="project-info">
+                    <strong>{{ project.name }}</strong>
+                    <div class="project-details">
+                        <small>Created: {{ project.created_date[:16] if project.created_date else 'N/A' }}</small>
+                    </div>
+                </div>
+                <div class="project-actions">
+                    <a href="/assets?project={{ project.id }}" class="btn-view">View Assets</a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

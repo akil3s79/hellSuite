@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HellSuite Security Report - {{ project.name }}</title>
+    <style>
+        :root {
+            --azul-oscuro: #1a365d;
+            --azul-medio: #2d74da;
+            --azul-claro: #ebf8ff;
+            --blanco: #ffffff;
+            --gris-claro: #f7fafc;
+            --gris-texto: #4a5568;
+            --rojo-error: #e53e3e;
+            --critical: #A10202;
+            --high: #feb2b2;
+            --medium: #fbd38d;
+            --low: #9ae6b4;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--azul-claro);
+            color: var(--gris-texto);
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: var(--azul-oscuro);
+            color: var(--blanco);
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .report-container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background: var(--blanco);
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .content-section {
+            padding: 25px;
+        }
+        
+        .vulnerability-card {
+            border-left: 4px solid var(--critical);
+            background: var(--gris-claro);
+            margin: 15px 0;
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .severity-critical { border-left-color: var(--critical); background: #fed7d7; }
+        .severity-high { border-left-color: var(--high); background: #fed7d7; }
+        .severity-medium { border-left-color: var(--medium); background: #feebc8; }
+        .severity-low { border-left-color: var(--low); background: #c6f6d5; }
+        
+        .risk-matrix {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .matrix-cell {
+            padding: 15px;
+            text-align: center;
+            border-radius: 5px;
+            font-weight: bold;
+            background: var(--gris-claro);
+        }
+        
+        .executive-summary {
+            background: var(--azul-claro);
+            border-radius: 8px;
+            padding: 25px;
+            margin: 20px 0;
+        }
+        
+        .section-title {
+            color: var(--azul-oscuro);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--azul-medio);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔒 HellSuite Security Report</h1>
+        <h2>{{ project.name }}</h2>
+        <p>Generated on: {{ current_date }}</p>
+    </div>
+    
+    <div class="report-container">
+        <div class="content-section">
+            {% include 'executive_summary.html' %}
+            {% include 'vulnerability_card.html' %}
+        </div>
+    </div>
+</body>
+</html>

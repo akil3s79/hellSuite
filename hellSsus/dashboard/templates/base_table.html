@@ -1,0 +1,49 @@
+<!-- templates/base_table.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <!-- Header Section -->
+    <div class="header-section">
+        <h1>{{ page_title }}</h1>
+        <p>{{ stats_summary }}</p>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="filters-section">
+        <div class="search-box">
+            <input type="text" id="globalSearch" placeholder="Search across all columns...">
+        </div>
+        <div class="filter-options">
+            <!-- Dynamic filters will go here -->
+            {% block filters %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Main Table -->
+    <div class="table-container">
+        <table class="data-table" id="mainTable">
+            {% block table_content %}{% endblock %}
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+        {% block pagination %}{% endblock %}
+    </div>
+</div>
+
+<!-- JavaScript for search/filter functionality -->
+<script>
+// Basic search functionality
+document.getElementById('globalSearch').addEventListener('input', function(e) {
+    const searchText = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('#mainTable tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchText) ? '' : 'none';
+    });
+});
+</script>
+{% endblock %}

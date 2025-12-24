@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HellSsus Security Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-content">
+            <div class="sidebar-header">
+                <h3>Menu</h3>
+            </div>
+            <div class="sidebar-links">
+                <a href="/" class="sidebar-link {% if request.path == '/' %}active{% endif %}">
+                    📊 Dashboard
+                </a>
+                <a href="/projects" class="sidebar-link {% if request.path == '/projects' %}active{% endif %}">
+                    📁 Projects
+                </a>
+                <a href="/assets" class="sidebar-link {% if request.path == '/assets' %}active{% endif %}">
+                    🔍 Assets
+                </a>
+                <a href="/endpoints" class="sidebar-link {% if request.path == '/endpoints' %}active{% endif %}">
+                    🔗 Endpoints
+                </a>
+                <a href="/vulnerabilities" class="sidebar-link {% if request.path == '/vulnerabilities' %}active{% endif %}">
+                    ⚠️ Vulnerabilities
+                </a>
+                <a href="/reports" class="sidebar-link {% if request.path.startswith('/reports') %}active{% endif %}">
+                <span>📄 Reports</span>
+                </a>
+                <a href="/logout" class="sidebar-link" style="margin-top: 20px; border-top: 1px solid var(--medium-blue); border-left: 1px solid var(--medium-blue); border-right: 1px solid var(--medium-blue); border-bottom: 1px solid var(--medium-blue); padding-top: 15px;">
+                    🚪 Logout ({{ session.username }})
+                </a>    
+            </div>
+        </div>
+    </div>
+
+<!-- Main Content -->
+<div class="main-content" id="mainContent">
+    <div class="content-wrapper">
+      <!--   <button class="sidebar-toggle" id="sidebarToggle">☰</button> -->
+        <div class="content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</div>
+
+    <script>
+        // Sidebar always visible
+        /*
+        // Sidebar toggle functionality
+        const sidebar = document.getElementById('sidebar');
+        const mainContent = document.getElementById('mainContent');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        
+        // 
+        sidebar.classList.add('active');
+        mainContent.classList.add('sidebar-active');
+
+        sidebarToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            mainContent.classList.toggle('sidebar-active');
+        });
+        */
+    </script>
+</body>
+</html>

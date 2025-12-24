@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HellSuite Report - {{ project_name }}</title>
+    <style>
+        /* ===== HELLSUITE COLOR PALETTE ===== */
+        :root {
+            --azul-oscuro: #1a365d;
+            --azul-medio: #2d74da;  
+            --azul-claro: #ebf8ff;
+            --blanco: #ffffff;
+            --gris-claro: #f7fafc;
+            --gris-texto: #4a5568;
+            --rojo-critical: #A10202;  /* Rober's choice */
+            --rojo-high: #feb2b2;
+            --naranja-medium: #fbd38d;
+            --verde-low: #9ae6b4;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--blanco);
+            color: var(--gris-texto);
+            line-height: 1.6;
+        }
+
+        /* ===== REPORT HEADER ===== */
+        .report-header {
+            background: var(--azul-oscuro);
+            color: var(--blanco);
+            padding: 2rem;
+            border-bottom: 4px solid var(--azul-medio);
+        }
+
+        .report-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .report-meta {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        /* ===== ACTION BUTTONS ===== */
+        .report-actions {
+            background: var(--gris-claro);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-pdf {
+            background: var(--rojo-critical);
+            color: white;
+        }
+
+        .btn-pdf:hover {
+            background: #8a0202;
+            transform: translateY(-1px);
+        }
+
+        .btn-json {
+            background: var(--azul-medio);
+            color: white;
+        }
+
+        .btn-json:hover {
+            background: #1a56bb;
+            transform: translateY(-1px);
+        }
+
+        /* ===== EXECUTIVE SUMMARY ===== */
+        .executive-summary {
+            background: var(--azul-claro);
+            padding: 2rem;
+            margin: 2rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--azul-medio);
+        }
+
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .kpi-card {
+            background: var(--blanco);
+            padding: 1.5rem;
+            border-radius: 6px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-critical { color: var(--rojo-critical); }
+        .kpi-high { color: var(--rojo-high); }
+        .kpi-medium { color: var(--naranja-medium); }
+        .kpi-low { color: var(--verde-low); }
+
+        /* ===== VULNERABILITIES SECTION ===== */
+        .vulnerabilities-section {
+            padding: 0 2rem 2rem;
+        }
+
+        .vuln-card {
+            background: var(--blanco);
+            border: 1px solid var(--gris-claro);
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .vuln-header {
+            display: flex;
+            justify-content: between;
+            align-items: start;
+            margin-bottom: 1rem;
+        }
+
+        .vuln-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .severity-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .severity-critical { background: var(--rojo-critical); color: white; }
+        .severity-high { background: var(--rojo-high); color: var(--azul-oscuro); }
+        .severity-medium { background: var(--naranja-medium); color: var(--azul-oscuro); }
+        .severity-low { background: var(--verde-low); color: var(--azul-oscuro); }
+
+        .vuln-details {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .detail-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 1rem;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: var(--azul-oscuro);
+        }
+    </style>
+</head>
+<body>
+    <!-- HEADER CON METADATOS -->
+    <div class="report-header">
+        <h1>🔥 HellSuite Security Report</h1>
+        <p class="report-subtitle">Professional Security Assessment</p>
+        <div class="report-meta">
+            <div><strong>Project:</strong> {{ project_name }}</div>
+            <div><strong>Date:</strong> {{ scan_date }}</div>
+            <div><strong>Generated by:</strong> HellSuite v2.0</div>
+        </div>
+    </div>
+
+    <!-- BOTONES DE ACCIÓN (LO QUE IMPORTA) -->
+    <div class="report-actions">
+        <button onclick="exportPDF()" class="btn btn-pdf">
+            📄 Export to PDF
+        </button>
+        <button onclick="exportPwndoc()" class="btn btn-json">
+            {} Export for Pwndoc
+        </button>
+    </div>
+
+    <!-- RESUMEN EJECUTIVO -->
+    <section class="executive-summary">
+        <h2>Executive Summary</h2>
+        <p>This report summarizes the security assessment findings for {{ project_name }}.</p>
+        
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-value kpi-critical">{{ critical_count }}</div>
+                <div class="kpi-label">Critical</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value kpi-high">{{ high_count }}</div>
+                <div class="kpi-label">High</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value kpi-medium">{{ medium_count }}</div>
+                <div class="kpi-label">Medium</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value kpi-low">{{ low_count }}</div>
+                <div class="kpi-label">Low</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- VULNERABILIDADES DETALLADAS -->
+    <section class="vulnerabilities-section">
+        <h2>Detailed Findings</h2>
+        
+        {% for vuln in vulnerabilities %}
+        <div class="vuln-card">
+            <div class="vuln-header">
+                <div class="vuln-title">{{ vuln.tipo }}</div>
+                <span class="severity-badge severity-{{ vuln.severity }}">{{ vuln.severity }}</span>
+            </div>
+            
+            <div class="vuln-details">
+                <div class="detail-row">
+                    <span class="detail-label">Description:</span>
+                    <span>{{ vuln.description }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Proof of Concept:</span>
+                    <span>{{ vuln.prueba_concepto }}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Recommendation:</span>
+                    <span>{{ vuln.recomendacion }}</span>
+                </div>
+                {% if vuln.cve %}
+                <div class="detail-row">
+                    <span class="detail-label">CVE:</span>
+                    <span>{{ vuln.cve }}</span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </section>
+
+<script>
+function exportPDF() {
+    window.location.href = '/project/{{ project_id }}/report/pdf';
+}
+
+function exportPwndoc() {
+    window.location.href = '/project/{{ project_id }}/report/pwndoc';
+}
+</script>
+</body>
+</html>

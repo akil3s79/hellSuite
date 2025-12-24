@@ -1,0 +1,373 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Asset Details</h1>
+    <p class="page-subtitle">{{ asset.url }}</p>
+</div>
+
+<div class="table-container">
+    <div style="padding: 20px;">
+        <!-- Basic Asset Info -->
+        <div class="asset-info">
+            <div style="background: var(--dark-blue); color: white; padding: 12px 15px; border-radius: 6px 6px 0 0; font-weight: bold;">
+                Basic Information
+            </div>
+            <div class="info-grid" style="border: 2px solid var(--dark-blue); border-top: none; border-radius: 0 0 6px 6px;">
+                <div><strong>URL:</strong> {{ asset.url }}</div>
+                <div><strong>Project:</strong> {{ project_name }}</div>
+                <div><strong>Discovered:</strong> 
+                    {% if asset.discovery_date %}
+                        {{ asset.discovery_date.replace('T', ' ')[:16] }}
+                    {% else %}
+                        During scan
+                    {% endif %}
+                </div>
+                {% if asset.technologies %}
+                <div><strong>Technologies:</strong> <em>See detailed list below</em></div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Endpoints Section -->
+        <div class="endpoints-section" style="margin-top: 30px;">
+            <h3 style="color: var(--dark-blue); margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--dark-blue);">
+                Discovered Endpoints ({{ endpoints|length }})
+            </h3>
+            
+            {% if endpoints %}
+            <div class="endpoints-list">
+                {% for endpoint in endpoints %}
+                <div class="endpoint-item">
+                    <div class="endpoint-method">{{ endpoint.method or 'GET' }}</div>
+                    <div class="endpoint-path">{{ endpoint.path }}</div>
+                    <div class="endpoint-status status-{{ endpoint.status_code // 100 }}x">
+                        {{ endpoint.status_code or 'N/A' }}
+                    </div>
+                    <div class="endpoint-length">{{ endpoint.content_length or 'N/A' }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 40px; color: var(--gray); border: 2px dashed var(--dark-blue); border-radius: 8px; background: var(--light-gray);">
+                <p style="font-size: 1.2em; margin-bottom: 10px;">📭 No endpoints discovered</p>
+                <p>Run a fuzzing scan to discover endpoints for this asset.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Technologies Section -->
+        {% if technologies %}
+        <div class="section" style="margin-top: 30px;">
+            <h3 style="color: var(--dark-blue); margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--dark-blue);">
+                🛠️ Technologies Detected ({{ technologies|length }})
+            </h3>
+            <div class="technologies-list">
+                {% for tech in technologies %}
+                <div class="tech-item">
+                    <div class="tech-header">
+                        <strong>{{ tech.name }}</strong> 
+                        <span class="tech-version">{{ tech.version or 'N/A' }}</span>
+                        <span class="tech-type">{{ tech.type }}</span>
+                        <span class="confidence-{{ tech.confidence.lower() }}">{{ tech.confidence }}</span>
+                    </div>
+                    {% if tech.vulnerabilities %}
+                    <div class="tech-vulns">
+                        <strong>Vulnerabilities:</strong>
+                        {% for cve in tech.vulnerabilities %}
+                        {% if 'critical' in cve.lower() %}
+                            <span class="cve-critical">{{ cve }}</span>
+                        {% elif 'high' in cve.lower() %}
+                            <span class="cve-high">{{ cve }}</span>
+                        {% elif 'medium' in cve.lower() %}
+                            <span class="cve-medium">{{ cve }}</span>
+                        {% elif 'low' in cve.lower() %}
+                            <span class="cve-low">{{ cve }}</span>
+                        {% else %}
+                            <span class="cve-info">{{ cve }}</span>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <div class="tech-source">Source: {{ tech.source }}</div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="section" style="margin-top: 30px;">
+            <h3 style="color: var(--dark-blue); margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--dark-blue);">
+                🛠️ Technologies Detected
+            </h3>
+            <div style="text-align: center; padding: 40px; color: var(--gray); border: 2px dashed var(--dark-blue); border-radius: 8px; background: var(--light-gray);">
+                <p style="font-size: 1.2em; margin-bottom: 10px;">🔍 No technologies detected</p>
+                <p>Run a reconnaissance scan to discover technologies.</p>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Secrets Section -->
+        {% if secrets %}
+        <div class="section" style="margin-top: 30px;">
+            <h3 style="color: var(--dark-blue); margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--dark-blue);">
+                🔑 Secrets Found ({{ secrets|length }})
+            </h3>
+            <div class="secrets-list">
+                {% for secret in secrets %}
+                <div class="secret-item">
+                    <div class="secret-type">{{ secret.type }}</div>
+                    <div class="secret-location">{{ secret.location }}</div>
+                    <div class="secret-confidence">Confidence: {{ secret.secret.confidence }}%</div>
+                    {% if secret.redacted %}
+                    <div class="secret-value">{{ secret.redacted }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="section" style="margin-top: 30px;">
+            <h3 style="color: var(--dark-blue); margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid var(--dark-blue);">
+                🔑 Secrets Found
+            </h3>
+            <div style="text-align: center; padding: 40px; color: var(--gray); border: 2px dashed var(--dark-blue); border-radius: 8px; background: var(--light-gray);">
+                <p style="font-size: 1.2em; margin-bottom: 10px;">✅ No secrets detected</p>
+                <p>No sensitive information was found in this asset.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    background: var(--white);
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid var(--dark-blue);
+}
+
+.endpoints-section {
+    margin-top: 30px;
+}
+
+.endpoints-list {
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--dark-blue);
+}
+
+.endpoint-item {
+    display: grid;
+    grid-template-columns: 80px 1fr 80px 100px;
+    gap: 15px;
+    padding: 12px 15px;
+    border-bottom: 1px solid #e2e8f0;
+    align-items: center;
+}
+
+.endpoint-item:last-child {
+    border-bottom: none;
+}
+
+.endpoint-method {
+    background: var(--dark-blue);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 0.8em;
+}
+
+.endpoint-path {
+    font-family: monospace;
+    word-break: break-all;
+}
+
+.endpoint-status {
+    text-align: center;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.section {
+    margin-top: 30px;
+}
+
+.technologies-list, .ports-list, .secrets-list {
+    background: var(--white);
+    border-radius: 8px;
+    border: 1px solid var(--dark-blue);
+}
+
+.tech-item, .port-item, .secret-item {
+    padding: 15px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.tech-item:last-child, .port-item:last-child, .secret-item:last-child {
+    border-bottom: none;
+}
+
+.tech-header {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.tech-version, .tech-type, .tech-confidence {
+    background: #e2e8f0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
+.tech-vulns {
+    margin: 8px 0;
+}
+
+.cve-badge {
+    background: #A10202;
+    color: #ffffff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin-right: 5px;
+    font-family: monospace;
+}
+
+.secret-type {
+    background: var(--dark-blue);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.secret-location {
+    font-family: monospace;
+    margin: 5px 0;
+}
+
+.secret-confidence {
+    color: #4a5568;
+    font-size: 0.9em;
+}
+
+.secret-value {
+    background: #f7fafc;
+    padding: 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    margin-top: 5px;
+    border: 1px solid #e2e8f0;
+}
+
+.status-2xx { background: #c6f6d5; color: #22543d; }
+.status-3xx { background: #fed7d7; color: #742a2a; }
+.status-4xx { background: #feebcb; color: #744210; }
+.status-5xx { background: #fed7d7; color: #742a2a; }
+
+.cve-critical { 
+    background: #A10202; 
+    color: #ffffff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin-right: 5px;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.cve-high { 
+    background: #feb2b2; 
+    color: #c53030;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin-right: 5px;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.cve-medium { 
+    background: #fef5e7; 
+    color: #744210;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin-right: 5px;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.cve-low { 
+    background: #c6f6d5; 
+    color: #22543d;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin-right: 5px;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+.cve-info { 
+    background: #ebf8ff; 
+    color: #1a365d;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    margin-right: 5px;
+    font-family: monospace;
+    font-weight: bold;
+}
+
+/* COLORS FOR CONFIDENCE */
+.confidence-critical { 
+    background: #A10202; 
+    color: #ffffff;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.confidence-high { 
+    background: #feb2b2; 
+    color: #c53030;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.confidence-medium { 
+    background: #fef5e7; 
+    color: #744210;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+.confidence-low { 
+    background: #c6f6d5; 
+    color: #22543d;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+}
+
+</style>
+{% endblock %}

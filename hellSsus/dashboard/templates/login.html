@@ -1,0 +1,45 @@
+{% extends "base_login.html" %}
+
+{% block content %}
+<div class="login-wrapper">
+    <div class="login-container">
+        <div class="login-header">
+            <h2>HellSuite Security Platform</h2>
+            <p>Enterprise Security Dashboard</p>
+        </div>
+        
+        {% if error %}
+        <div class="alert-error">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <form method="POST" class="login-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="btn-login-submit">Login</button>
+        </form>
+        
+        <div class="login-footer">
+            <p style="text-align: center; margin-top: 20px; color: var(--gray);">
+                {% if allow_register %}
+                    Need an account? <a href="{{ url_for('register') }}" style="color: var(--medium-blue); font-weight: bold;">Register here</a>
+                {% else %}
+                    Contact administrator for access
+                {% endif %}
+            </p>
+            <p style="font-size: 0.8em; text-align: center; color: #718096; margin-top: 10px;">
+                HellSuite beta 0.9 - Professional Security Suite
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Endpoints Management</h1>
+    <p class="page-subtitle">{{ stats_summary }}</p>
+</div>
+
+<div class="table-container">
+    <!-- HEADER -->
+    <div style="background: var(--dark-blue); color: white; padding: 12px 15px; border-radius: 6px 6px 0 0; font-weight: bold;">
+        Endpoints Found ({{ endpoints|length }})
+    </div>
+    
+    <div style="padding: 20px;">
+        <!-- Search Bar -->
+        <div class="search-container">
+            <input type="text" 
+                   id="searchInput" 
+                   class="search-input" 
+                   placeholder="Search endpoints (path, method, status, project)..."
+                   onkeyup="searchEndpoints()">
+        </div>
+
+        <!-- Endpoints Table -->
+        <table class="data-table" id="endpointsTable">
+            <thead>
+                <tr>
+                    <th>Method</th>
+                    <th>Path</th>
+                    <th>Status</th>
+                    <th>Project</th>
+                    <th>Asset URL</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for endpoint in endpoints %}
+                <tr>
+                    <td>
+                        <span class="http-method http-{{ endpoint.method.lower() }}">
+                            {{ endpoint.method }}
+                        </span>
+                    </td>
+                    <td>{{ endpoint.path }}</td>
+                    <td>
+                        <span class="status-code status-{{ endpoint.status_code // 100 }}xx">
+                            {{ endpoint.status_code }}
+                        </span>
+                    </td>
+                    <td>{{ endpoint.project_name or 'N/A' }}</td>
+                    <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                        {{ endpoint.asset_url or 'N/A' }}
+                    </td>
+                    <td>
+                        <a href="/asset/{{ endpoint.asset_id }}" class="btn-view">View Asset</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function searchEndpoints() {
+    var input = document.getElementById('searchInput');
+    var filter = input.value.toUpperCase();
+    var table = document.getElementById('endpointsTable');
+    var tr = table.getElementsByTagName('tr');
+    
+    for (var i = 1; i < tr.length; i++) {
+        var tds = tr[i].getElementsByTagName('td');
+        var found = false;
+        
+        for (var j = 0; j < tds.length - 1; j++) { // Exclude actions column
+            var td = tds[j];
+            if (td) {
+                var textValue = td.textContent || td.innerText;
+                if (textValue.toUpperCase().indexOf(filter) > -1) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        
+        tr[i].style.display = found ? '' : 'none';
+    }
+}
+</script>
+{% endblock %}
