@@ -11,13 +11,11 @@ import io
 from functools import wraps
 from datetime import datetime
 
-# Add parent directory to path for config import
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import logging
 from config.logging_config import dashboard_logger, setup_application_logging
 
-# Load environment variables WITHOUT dotenv first
 import os
 from pathlib import Path
 
@@ -53,10 +51,6 @@ app.config['ALLOW_REGISTER'] = allow_register_str.lower() == 'true'
 if app.config['DEBUG']:
     print(f"[DEBUG] Registration enabled: {app.config['ALLOW_REGISTER']}")
 
-# ============================================================================
-# TEMPLATE CONTEXT PROCESSORS
-# ============================================================================
-
 @app.context_processor
 def inject_config():
     """Inject configuration variables into all templates"""
@@ -73,7 +67,7 @@ except ImportError:
 
 def get_db_connection():
     """Connect to SQLite database"""
-    # Go up one level from the dashboard and enter the database.
+
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     db_path = os.path.join(base_dir, 'database', 'hellSsus.db')
     
@@ -86,7 +80,7 @@ def init_users_table():
     conn = get_db_connection()
     
     try:
-        # Check if role column exists, add it if not
+
         cursor = conn.cursor()
         cursor.execute("PRAGMA table_info(users)")
         columns = [col[1] for col in cursor.fetchall()]
@@ -100,7 +94,6 @@ def init_users_table():
             except Exception as e:
                 dashboard_logger.error(f"Error adding role column: {e}", exc_info=True)
         
-        # Create table if it doesn't exist
         conn.execute('''
             CREATE TABLE IF NOT EXISTS users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -111,14 +104,11 @@ def init_users_table():
             )
         ''')
         
-        # Ensure admin user has admin role
         admin_user = conn.execute(
             'SELECT * FROM users WHERE username = ?', ('admin',)
         ).fetchone()
         
-        # CORREGIDO: Usar acceso por índice, no .get()
         if admin_user:
-            # Convert Row to dict para acceso seguro
             admin_dict = dict(admin_user)
             if admin_dict.get('role') != 'admin':
                 conn.execute(
@@ -174,20 +164,15 @@ def create_default_user():
     else:
         dashboard_logger.info(f"Users already exist: {user_count} users")
 
-# ============================================================================
-# ROLE-BASED ACCESS CONTROL SYSTEM
-# ============================================================================
-
 def role_required(required_role='viewer'):
     """Decorator to require specific role"""
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            # 1. Check session
+
             if 'user_id' not in session:
                 return redirect(url_for('login'))
-            
-            # 2. Get current user with role
+
             conn = get_db_connection()
             user = conn.execute(
                 'SELECT username, role FROM users WHERE id = ?',
@@ -195,17 +180,14 @@ def role_required(required_role='viewer'):
             ).fetchone()
             conn.close()
             
-            # 3. If user doesn't exist, clear session
             if not user:
                 session.clear()
                 return redirect(url_for('login'))
-            
-            # 4. Role hierarchy check
+
             role_hierarchy = {'viewer': 1, 'analyst': 2, 'admin': 3}
             user_level = role_hierarchy.get(user['role'], 0)
             required_level = role_hierarchy.get(required_role, 0)
-            
-            # 5. Permission check
+
             if user_level < required_level:
                 print(f"[SECURITY] Access denied: {user['username']} ({user['role']}) tried to access {request.path} (required: {required_role})")
                 return render_template('error.html', 
@@ -217,7 +199,6 @@ def role_required(required_role='viewer'):
         return decorated_function
     return decorator
 
-# Backward compatibility decorator
 def login_required(f):
     """Login decorator (alias for viewer role)"""
     return role_required('viewer')(f)
@@ -229,7 +210,6 @@ def login_required(f):
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """User registration page"""
-    # Use app configuration
     if not app.config['ALLOW_REGISTER']:
         return "Registration disabled. Set HELLSUITE_ALLOW_REGISTER=True in .env file", 403
     
@@ -244,13 +224,11 @@ def register():
         if len(password) < 8:
             return render_template('register.html', error='Password must be at least 8 characters')
         
-        # Validate role
         if role not in ['viewer', 'analyst', 'admin']:
             role = 'viewer'
         
         conn = get_db_connection()
         
-        # Check if user exists
         existing = conn.execute(
             'SELECT id FROM users WHERE username = ?', (username,)
         ).fetchone()
@@ -259,7 +237,6 @@ def register():
             conn.close()
             return render_template('register.html', error='Username already exists')
         
-        # Create user
         password_hash = hash_password(password)
         conn.execute(
             'INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)',
@@ -271,7 +248,6 @@ def register():
         print(f"[+] User created: {username} (role: {role})")
         return redirect(url_for('login'))
     
-    # GET request - show registration form
     return render_template('register.html')
 
 # ============================================================================
@@ -332,7 +308,7 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/projects')
-@role_required('analyst')  # Only analysts and admins
+@role_required('analyst')
 def projects():
     """Projects list page"""
     conn = get_db_connection()
@@ -343,7 +319,7 @@ def projects():
     return render_template('projects.html', projects=projects)
 
 @app.route('/assets')
-@role_required('analyst')  # Only analysts and admins
+@role_required('analyst')
 def assets():
     """Assets list page - filter by project if specified"""
     project_id = request.args.get('project', type=int)
@@ -378,7 +354,7 @@ def assets():
     return render_template('assets.html', assets=assets, project_name=project_name, project_id=project_id)
 
 @app.route('/vulnerabilities')
-@role_required('analyst')  # Only analysts and admins
+@role_required('analyst')
 def vulnerabilities():
     """Vulnerabilities list page - filter by project if specified"""
     project_id = request.args.get('project', type=int)
@@ -433,7 +409,7 @@ def vulnerabilities():
                          project_id=project_id)
 
 @app.route('/api/stats')
-@role_required('viewer')  # All authenticated users
+@role_required('viewer')
 def api_stats():
     """JSON API endpoint for dashboard stats"""
     conn = get_db_connection()
@@ -449,12 +425,11 @@ def api_stats():
     return jsonify(stats)
 
 @app.route('/asset/<int:asset_id>')
-@role_required('analyst')  # Only analysts and admins
+@role_required('analyst')
 def asset_detail(asset_id):
     """Asset details page with all findings"""
     conn = get_db_connection()
     
-    # Get basic asset info
     asset = conn.execute(
         'SELECT * FROM assets WHERE id = ?', (asset_id,)
     ).fetchone()
@@ -463,19 +438,16 @@ def asset_detail(asset_id):
         conn.close()
         return "Asset not found", 404
     
-    # Get endpoints from HellFuzzer
     endpoints = conn.execute(
         'SELECT * FROM endpoints WHERE asset_id = ? ORDER BY path', (asset_id,)
     ).fetchall()
     
-    # Get project name
     project = conn.execute(
         'SELECT name FROM projects WHERE id = ?', (asset['project_id'],)
     ).fetchone()
     
     conn.close()
     
-    # Parse open ports JSON
     open_ports = []
     if asset['open_ports']:
         try:
@@ -483,7 +455,6 @@ def asset_detail(asset_id):
         except:
             open_ports = []
     
-    # Parse technologies JSON
     technologies = []
     if asset['technologies']:
         try:
@@ -499,13 +470,12 @@ def asset_detail(asset_id):
                          project_name=project['name'] if project else 'Unknown')
 
 @app.route('/project/<int:project_id>/report')
-@role_required('viewer')  # All authenticated users
+@role_required('viewer')
 def project_report(project_id):
     """Generate HTML report with unified dashboard design"""
     try:
         conn = get_db_connection()
-        
-        # Get project details
+
         project = conn.execute(
             'SELECT * FROM projects WHERE id = ?', (project_id,)
         ).fetchone()
@@ -513,7 +483,6 @@ def project_report(project_id):
         if not project:
             return "Project not found", 404
         
-        # Get vulnerabilities count by severity
         severity_rows = conn.execute('''
             SELECT severity, COUNT(*) as count 
             FROM vulnerabilities 
@@ -521,12 +490,10 @@ def project_report(project_id):
             GROUP BY severity
         ''', (project_id,)).fetchall()
         
-        # Convert to dict for easy access
         severity_counts = {}
         for row in severity_rows:
             severity_counts[row['severity']] = row['count']
         
-        # Get critical vulnerabilities for executive summary
         critical_vulns = conn.execute('''
             SELECT * FROM vulnerabilities 
             WHERE project_id = ? AND severity = 'critical'
@@ -534,7 +501,6 @@ def project_report(project_id):
             LIMIT 5
         ''', (project_id,)).fetchall()
         
-        # Get all vulnerabilities with asset info
         vulnerabilities = conn.execute('''
             SELECT v.*, a.url as asset_url 
             FROM vulnerabilities v 
@@ -569,7 +535,7 @@ def project_report(project_id):
         return f"Error generating report: {str(e)}", 500
 
 @app.route('/project/<int:project_id>/report/pdf')
-@role_required('viewer')  # All authenticated users
+@role_required('viewer')
 def export_pdf(project_id):
     """Export PDF using dedicated PDF template"""
     try:
@@ -601,7 +567,7 @@ def export_pdf(project_id):
         return "Error generating PDF", 500
 
 @app.route('/endpoints')
-@role_required('analyst')  # Only analysts and admins
+@role_required('analyst')
 def endpoints():
     """Endpoints management page"""
     if 'user_id' not in session:
@@ -632,7 +598,7 @@ def endpoints():
                          stats_summary=f'Found {len(endpoints_data)} endpoints across all projects')
 
 @app.route('/reports')
-@role_required('viewer')  # All authenticated users
+@role_required('viewer')
 def reports_list():
     """List all projects with report links"""
     conn = get_db_connection()
@@ -644,13 +610,12 @@ def reports_list():
     return render_template('reports_list.html', projects=projects)
 
 @app.route('/project/<int:project_id>/report/json')
-@role_required('analyst')  # Only analysts and admins (sensitive data)
+@role_required('analyst')
 def export_pwndoc_json(project_id):
     """Export project data in Pwndoc-compatible JSON format"""
     try:
         conn = get_db_connection()
-        
-        # Get project details
+
         project = conn.execute(
             'SELECT * FROM projects WHERE id = ?', (project_id,)
         ).fetchone()
@@ -658,7 +623,6 @@ def export_pwndoc_json(project_id):
         if not project:
             return "Project not found", 404
         
-        # Get all vulnerabilities with asset info
         vulnerabilities = conn.execute('''
             SELECT v.*, a.url as asset_url 
             FROM vulnerabilities v 
@@ -675,15 +639,13 @@ def export_pwndoc_json(project_id):
                 v.cvss_score DESC
         ''', (project_id,)).fetchall()
         
-        # Get assets for this project
         assets = conn.execute('''
             SELECT * FROM assets WHERE project_id = ?
         ''', (project_id,)).fetchall()
         
-        # First, find out what columns the assets table actually has
         cursor = conn.cursor()
         cursor.execute("PRAGMA table_info(assets)")
-        asset_columns = [col[1] for col in cursor.fetchall()]  # Column names
+        asset_columns = [col[1] for col in cursor.fetchall()]
         
         print(f"[DEBUG] Columns in assets table: {asset_columns}")
         
@@ -704,7 +666,6 @@ def export_pwndoc_json(project_id):
             "assets": []
         }
         
-        # Helper function to safely get value from sqlite3.Row
         def safe_get(row, key, default=""):
             """Safely get value from sqlite3.Row or return default"""
             try:
@@ -714,7 +675,6 @@ def export_pwndoc_json(project_id):
         
         # Process vulnerabilities for Pwndoc
         for vuln in vulnerabilities:
-            # Map severity to CVSS base score
             severity_to_cvss = {
                 'critical': 9.0,
                 'high': 7.0,
@@ -722,7 +682,6 @@ def export_pwndoc_json(project_id):
                 'low': 3.0
             }
             
-            # Convert sqlite3.Row to dict for easier access
             vuln_dict = dict(vuln)
             
             pwndoc_vuln = {
@@ -742,12 +701,9 @@ def export_pwndoc_json(project_id):
             }
             pwndoc_data["vulnerabilities"].append(pwndoc_vuln)
         
-        # Process assets for Pwndoc
         for asset in assets:
-            # Convert sqlite3.Row to dict
             asset_dict = dict(asset)
             
-            # Parse JSON fields safely
             technologies = []
             open_ports = []
             
@@ -767,7 +723,7 @@ def export_pwndoc_json(project_id):
             
             pwndoc_asset = {
                 "url": asset_dict.get('url', ''),
-                "ip": asset_dict.get('ip', ''),  # This won't fail even if column doesn't exist
+                "ip": asset_dict.get('ip', ''),
                 "discovery_date": (asset_dict.get('discovery_date', '')[:10] 
                                   if asset_dict.get('discovery_date') 
                                   else ''),
@@ -793,37 +749,32 @@ def generate_pdf_html(project_id):
     """Generate PDF report using the new unified template"""
     try:
         conn = get_db_connection()
-        
-        # Get project details
+
         project = conn.execute(
             'SELECT * FROM projects WHERE id = ?', (project_id,)
         ).fetchone()
         
         if not project:
             return "<html><body>Project not found</body></html>"
-        
-        # Get vulnerabilities count by severity
+
         severity_rows = conn.execute('''
             SELECT severity, COUNT(*) as count 
             FROM vulnerabilities 
             WHERE project_id = ? 
             GROUP BY severity
         ''', (project_id,)).fetchall()
-        
-        # Convert to dict
+
         severity_counts = {}
         for row in severity_rows:
             severity_counts[row['severity']] = row['count']
-        
-        # Get critical vulnerabilities
+
         critical_vulns = conn.execute('''
             SELECT * FROM vulnerabilities 
             WHERE project_id = ? AND severity = 'critical'
             ORDER BY cvss_score DESC
             LIMIT 5
         ''', (project_id,)).fetchall()
-        
-        # Get all vulnerabilities with asset info
+
         vulnerabilities = conn.execute('''
             SELECT v.*, a.url as asset_url 
             FROM vulnerabilities v 
@@ -895,11 +846,10 @@ def internal_error(error):
 # APPLICATION INITIALIZATION
 # ============================================================================
 
-# Initialize database on startup
 init_users_table()
 create_default_user()
 
-setup_application_logging()  # Initialize logging system
+setup_application_logging()
 dashboard_logger.info("HellSsus Dashboard starting")
 dashboard_logger.info(f"Access at: http://localhost:5000")
 
@@ -912,10 +862,9 @@ if app.config['DEBUG']:
 # APPLICATION INITIALIZATION
 # ============================================================================
 
-# Setup logging first
+
 setup_application_logging()
 
-# Initialize database on startup
 init_users_table()
 create_default_user()
 

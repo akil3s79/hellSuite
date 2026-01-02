@@ -12,7 +12,6 @@ import os
 from urllib.parse import urlparse
 from datetime import datetime
 
-# Disable SSL warnings for testing
 requests.packages.urllib3.disable_warnings()
 
 def check_security_headers(target):
@@ -74,38 +73,32 @@ def check_exposed_files(target):
 def integrate_with_hellsuite(target, project_name):
     """Integrate results with HellSuite database"""
     try:
-        # SUPER SIMPLE IMPORT - Direct path
         import sys
         import os
         
-        # Go up two levels from tools/hellScanner/ to hellSuite root
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        tools_dir = os.path.dirname(current_dir)  # tools/
-        hellsuite_root = os.path.dirname(tools_dir)  # hellSuite/
+        tools_dir = os.path.dirname(current_dir)
+        hellsuite_root = os.path.dirname(tools_dir)
         hellsus_dir = os.path.join(hellsuite_root, 'hellSsus')
         
         print(f"[*] Looking for HellSuite in: {hellsus_dir}")
         
-        # Add to path
         if hellsus_dir not in sys.path:
             sys.path.append(hellsus_dir)
         
-        # Try to import
         try:
             from integrations.hellscanner_adapter import save_scan_results
             print("[+] HellScanner adapter imported successfully!")
         except ImportError:
-            # Try alternative import
+
             sys.path.append(hellsuite_root)
             from hellSsus.integrations.hellscanner_adapter import save_scan_results
             print("[+] HellScanner adapter imported (alternative path)!")
         
-        # Run security scan
         all_findings = []
         all_findings.extend(check_security_headers(target))
         all_findings.extend(check_exposed_files(target))
         
-        # Prepare data for HellSuite
         scan_data = {
             'target': target,
             'scan_date': str(datetime.now().isoformat()),
@@ -138,12 +131,10 @@ def run_standalone_scan(target, output_file=None):
     print(f"[*] Target: {target}")
     print("[*] Mode: Standalone")
     
-    # Run security scan
     all_findings = []
     all_findings.extend(check_security_headers(target))
     all_findings.extend(check_exposed_files(target))
     
-    # Prepare output data
     output_data = {
         'scanner': 'HellScanner',
         'version': '1.0',
@@ -168,7 +159,6 @@ def run_standalone_scan(target, output_file=None):
             print(f"[!] Error saving results: {e}")
             return 1
     else:
-        # If no output file, print to console
         print(json.dumps(output_data, indent=2))
 
     print(f"[+] Scan completed: {len(all_findings)} vulnerabilities found")
@@ -177,12 +167,10 @@ def run_standalone_scan(target, output_file=None):
 def main():
     parser = argparse.ArgumentParser(description='HellScanner - Basic Vulnerability Scanner')
     
-    # Main arguments (MUTUALLY EXCLUSIVE)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('--target', help='Target URL to scan (standalone mode)')
     group.add_argument('--project', help='HellSuite project name (integration mode)')
     
-    # Additional arguments
     parser.add_argument('--url', help='Target URL (required with --project)')
     parser.add_argument('-o', '--output', help='Output JSON file (standalone mode)')
     # parser.add_argument('--silent', action='store_true', help='Suppress banner')
@@ -201,7 +189,7 @@ def main():
         success = integrate_with_hellsuite(args.url, args.project)
         return 0 if success else 1
     
-    # STANDALONE MODE (your original code improved)
+    # STANDALONE MODE
     elif args.target:
         result = run_standalone_scan(args.target, args.output)
         return 0 if result else 1

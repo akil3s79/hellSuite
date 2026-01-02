@@ -36,7 +36,6 @@ class NucleiAdapter:
         Extract and normalize URL from Nuclei finding.
         Returns a clean URL suitable for your assets.url column.
         """
-        # Try multiple possible fields
         url = nuclei_data.get('url') or nuclei_data.get('host') or 'unknown'
         
         if isinstance(url, list):
@@ -44,7 +43,6 @@ class NucleiAdapter:
         
         url = str(url).strip()
         
-        # Ensure it has a scheme
         if url != 'unknown' and '://' not in url:
             scheme = nuclei_data.get('scheme', 'http')
             url = f"{scheme}://{url}"
@@ -76,7 +74,6 @@ class NucleiAdapter:
         if not isinstance(tags, list):
             tags = []
         
-        # Check template name first (more specific)
         if any(word in template_name for word in ['xss', 'cross-site', 'injection']):
             return 'Web Vulnerability'
         elif any(word in template_name for word in ['sqli', 'sql-injection']):
@@ -93,8 +90,6 @@ class NucleiAdapter:
             return 'Misconfiguration'
         elif any(word in template_name for word in ['exposure', 'info-disclosure']):
             return 'Information Exposure'
-        
-        # Then check tags
         elif any(tag in tags for tag in ['tech', 'technologies', 'technology', 'wappalyzer']):
             return 'Technology Detection'
         elif any(tag in tags for tag in ['cve', 'vulnerability', 'vuln']):
@@ -121,7 +116,6 @@ class NucleiAdapter:
         
         cursor = conn.cursor()
         
-        # Get project ID
         if project_id is None:
             if project_name:
                 cursor.execute('SELECT id FROM projects WHERE name = ?', (project_name,))
@@ -160,10 +154,8 @@ class NucleiAdapter:
                 continue
             
             try:
-                # 1. EXTRACT AND NORMALIZE URL (for assets table)
                 asset_url = self.extract_and_normalize_url(finding)
                 
-                # 2. GET OR CREATE ASSET (using url column)
                 cursor.execute(
                     'SELECT id FROM assets WHERE project_id = ? AND url = ?',
                     (project_id, asset_url)
@@ -173,7 +165,6 @@ class NucleiAdapter:
                 if asset:
                     asset_id = asset['id']
                 else:
-                    # Create new asset with minimal data
                     cursor.execute(
                         '''INSERT INTO assets 
                            (url, project_id, discovery_date) 
@@ -182,7 +173,6 @@ class NucleiAdapter:
                     )
                     asset_id = cursor.lastrowid
                 
-                # 3. EXTRACT INFO FROM NUCLEI FINDING
                 info = finding.get('info', {})
                 if isinstance(info, str):
                     info = {'name': info}
@@ -190,7 +180,6 @@ class NucleiAdapter:
                 template_id = finding.get('template-id', 'unknown')
                 template_name = info.get('name', 'Unknown')
                 
-                # 4. CHECK FOR DUPLICATE VULNERABILITY
                 cursor.execute(
                     '''SELECT id FROM vulnerabilities 
                        WHERE project_id = ? AND asset_id = ? 
@@ -201,17 +190,14 @@ class NucleiAdapter:
                 if cursor.fetchone():
                     print(f"[*] Duplicate skipped: {template_name}", file=sys.stderr)
                     continue
-                
-                # 5. MAP FIELDS TO YOUR SCHEMA
+
                 vuln_type = self.determine_vuln_type(info)
                 severity = self.map_severity(info.get('severity'))
-                
-                # Build description
+
                 description = info.get('description', '')
                 if not description:
                     description = f"{template_name} detected via Nuclei"
-                
-                # References
+
                 refs = info.get('reference', [])
                 if isinstance(refs, list):
                     references = '; '.join(refs)
@@ -240,7 +226,6 @@ class NucleiAdapter:
                 else:
                     discovery_date = datetime.now().isoformat()
                 
-                # 6. INSERT INTO VULNERABILITIES (YOUR EXACT SCHEMA)
                 cursor.execute('''
                     INSERT INTO vulnerabilities 
                     (type, severity, description, reference, proof_of_concept, 
@@ -254,7 +239,7 @@ class NucleiAdapter:
                     poc,
                     recommendation,
                     cve,
-                    None,  # cvss_score - Nuclei doesn't provide this
+                    None,
                     project_id,
                     asset_id,
                     discovery_date
@@ -272,7 +257,6 @@ class NucleiAdapter:
                     import traceback
                     traceback.print_exc()
         
-        # FINALIZE
         conn.commit()
         
         # Show summary
@@ -285,7 +269,6 @@ class NucleiAdapter:
         print(f"[+] FINAL RESULT: {imported} imported, {errors} errors", file=sys.stderr)
         print(f"[+] Total vulnerabilities in project: {total}", file=sys.stderr)
         
-        # Also show what was imported
         if imported > 0:
             cursor.execute(
                 '''SELECT v.type, v.severity, v.description, a.url 

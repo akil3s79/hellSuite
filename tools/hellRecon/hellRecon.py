@@ -60,8 +60,6 @@ def safe_print(text, color_code=""):
         else:
             print(text)
 
-# ===== END COMPATIBILITY FIX =====
-
 def show_banner():
     print("[*] HellFuzzer - Directory/File Fuzzer")
 
@@ -102,7 +100,6 @@ class Colors:
     END = '\033[0m' if USE_COLORS else ''
 
 def show_banner(method='GET'):
-    # Banner minimalista para suite integrada
     print(f"[*] HellRecon - Technology Intelligence Scanner")
     print(f"[*] Target scan started | Method: {method}")
     print("-" * 50)
@@ -1354,7 +1351,7 @@ class VulnerabilityChecker:
                         return "Low"
         except Exception:
             pass
-        return "Info"  # fallback if doesn't exist
+        return "Info"
     
 class ReportGenerator:
     @staticmethod
@@ -1515,7 +1512,6 @@ class ReportGenerator:
                     vulns = vuln_checker.check_technology(tech, version)
                     exploits = {}
                 if vulns:
-                    # Severity = the worst CVE on the list
                     severities = [vuln_checker.get_cvss_severity(cve) for cve in vulns]
                     severity_map = {"Critical": 4, "High": 3, "Medium": 2, "Low": 1, "Info": 0}
                     worst = max(severities, key=lambda s: severity_map.get(s, 0))
@@ -1897,7 +1893,7 @@ def scan_token_leak(base_url: str, session, verbose: bool = False) -> list:
 
 
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-# TOKEN-LEAK HUNTER v3.0-alpha – 
+# TOKEN-LEAK HUNTER
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 _TOKEN_RULES = {

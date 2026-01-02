@@ -27,41 +27,35 @@ def run_nuclei_scan(target, output_file=None, templates=None, severity=None, rat
         dict: Standardized hellSuite result dict.
         Example: {'status': 'success', 'data': [...], 'output_file': '/path/file.json', 'error': None}
     """
-    # 1. SECURITY & INPUT VALIDATION (Critical for OWASP Top 10 - Command Injection)
+
     if not isinstance(target, str) or not target.strip():
         return {'status': 'error', 'error': 'Invalid target provided. Must be a non-empty string.', 'data': []}
     
     target = target.strip()
-    # Basic safety check - reject targets that could be part of a command injection attempt
     if any(char in target for char in [';', '&', '|', '`', '$', '>', '<', '\n']):
         return {'status': 'error', 'error': 'Target contains potentially dangerous characters.', 'data': []}
 
-    # 2. COMMAND CONSTRUCTION (Using list for safety, NO shell=True)
     cmd = ["nuclei", "-u", target, "-j", "-silent", "-rl", str(rate_limit), "-timeout", str(timeout // 60)]
     
-    # Add TAGS by default for faster, more relevant scans
-    if not templates:  # Only add default tags if no custom templates specified
+
+    if not templates:
         cmd.extend(["-tags", "tech,network,vulnerability"])
 
-    # Add severity filter if specified and valid
     valid_severities = ["info", "low", "medium", "high", "critical"]
     if severity and severity.lower() in valid_severities:
         cmd.extend(["-severity", severity.lower()])
 
-    # Add custom templates with path validation
     if templates:
         template_path = Path(templates)
         if template_path.exists():
-            cmd.extend(["-t", str(template_path.resolve())])  # Use absolute path
+            cmd.extend(["-t", str(template_path.resolve())])
         else:
-            # Log warning but proceed with default templates
+
             print(f"[!] WARNING: Custom template path not found: {templates}. Using default Nuclei templates.", file=sys.stderr)
 
-    # 3. EXECUTION WITH ROBUST ERROR HANDLING
     print(f"[*] Starting Nuclei scan for: {target}", file=sys.stderr)
     
     try:
-        # SECURITY: subprocess.run with list, timeout, and no shell
         process = subprocess.run(
             cmd,
             capture_output=True,
@@ -81,7 +75,7 @@ def run_nuclei_scan(target, output_file=None, templates=None, severity=None, rat
         print(f"[-] ERROR: {error_msg}", file=sys.stderr)
         return {'status': 'error', 'error': error_msg, 'data': []}
 
-    # 4. OUTPUT PROCESSING
+
     findings = []
     if process.stdout:
         for line in process.stdout.strip().splitlines():
@@ -89,14 +83,14 @@ def run_nuclei_scan(target, output_file=None, templates=None, severity=None, rat
                 try:
                     findings.append(json.loads(line))
                 except json.JSONDecodeError:
-                    continue  # Skip malformed lines, log if needed
+                    continue
 
-    # 5. SAVE RESULTS (if output path provided)
+
     saved_path = None
     if output_file:
         try:
             output_path = Path(output_file)
-            output_path.parent.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
+            output_path.parent.mkdir(parents=True, exist_ok=True)
             with open(output_path, 'w') as f:
                 json.dump(findings, f, indent=4)
             saved_path = str(output_path.resolve())
@@ -104,9 +98,7 @@ def run_nuclei_scan(target, output_file=None, templates=None, severity=None, rat
         except Exception as e:
             error_msg = f"Failed to save output file: {str(e)}"
             print(f"[-] WARNING: {error_msg}", file=sys.stderr)
-            # Don't fail the scan just because of save error
 
-    # 6. RETURN STANDARDIZED RESULT
     scan_successful = process.returncode == 0
     result = {
         'status': 'success' if scan_successful else 'error',
@@ -114,7 +106,7 @@ def run_nuclei_scan(target, output_file=None, templates=None, severity=None, rat
         'findings_count': len(findings),
         'output_file': saved_path,
         'target': target,
-        'command_executed': ' '.join(cmd)  # Useful for debugging
+        'command_executed': ' '.join(cmd)
     }
     
     if process.stderr and process.returncode != 0:
@@ -140,13 +132,10 @@ def run_nuclei_scan_bulk(targets, output_dir=None, **kwargs):
     all_results = []
     for target in targets:
         print(f"\n[*] Processing target: {target}", file=sys.stderr)
-        
-        # Build output file path if directory is provided
+
         output_file = None
         if output_dir:
-            # Create a safe filename from the target
             safe_name = target.replace('://', '_').replace('/', '_').replace(':', '_')
-            # Limit length to avoid filesystem errors
             safe_name = safe_name[:150] if len(safe_name) > 150 else safe_name
             output_file = os.path.join(output_dir, f"nuclei_{safe_name}.json")
         

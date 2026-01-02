@@ -40,7 +40,6 @@ def get_latest_scan(tool_name):
 def get_scan_path(tool_name, target):
     """Generate scan file path for a new scan"""
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    # Sanitize target for filename
     safe_target = target.replace('://', '_').replace('/', '_').replace(':', '_').replace('?', '_').replace('&', '_')
     filename = f"{tool_name}_scan_{safe_target}_{timestamp}.json"
     return os.path.join(SCANS_DIR, filename)

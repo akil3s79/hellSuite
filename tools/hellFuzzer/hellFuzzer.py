@@ -51,13 +51,10 @@ class Colors:
     else:
         RED = GREEN = YELLOW = BLUE = CYAN = MAGENTA = ORANGE = END = ''
 		
-# Disable SSL warnings - we're pentesters, we know what we're doing
 requests.packages.urllib3.disable_warnings(category=InsecureRequestWarning)
 
-# Lock for clean thread output
 print_lock = threading.Lock()
 
-# Check if we're in a terminal for colors
 USE_COLORS = sys.stdout.isatty()
 
 class Colors:
@@ -94,35 +91,32 @@ def extract_words_from_content(content, base_url, current_path):
     words = set()
     
     try:
-        # MORE AGGRESSIVE PATTERNS BUT MAINTAINING QUALITY
         path_patterns = [
-            r'[\'"](/[a-zA-Z0-9_\-./][^\'"]*?)[\'"]',  # Permissive paths
+            r'[\'"](/[a-zA-Z0-9_\-./][^\'"]*?)[\'"]',
             r'href=[\'"](/[^\'"]*?)[\'"]',
             r'src=[\'"](/[^\'"]*?)[\'"]', 
             r'action=[\'"](/[^\'"]*?)[\'"]',
             r'url\([\'"]?/([^\'")]*?)[\'"]?\)',
-            r'[\'"]([a-zA-Z0-9_\-./]+\.(php|html|js|json|xml|asp|jsp))[\'"]',  # Specific files
+            r'[\'"]([a-zA-Z0-9_\-./]+\.(php|html|js|json|xml|asp|jsp))[\'"]',
         ]
         
         for pattern in path_patterns:
             matches = re.findall(pattern, content, re.IGNORECASE)
             for match in matches:
                 if isinstance(match, tuple):
-                    match = match[0]  # Take first group if tuples
+                    match = match[0]
                 if match and len(match) > 1 and ' ' not in match:
                     clean_path = match.split('?')[0].split('#')[0]
-                    # LESS RESTRICTIVE: keep more file types
                     if not clean_path.endswith(('.css', '.jpg', '.png', '.gif', '.ico', '.woff', '.ttf')):
                         words.add(clean_path.lstrip('/'))
         
-        # MORE AGGRESSIVE IDENTIFIER PATTERNS
         identifier_patterns = [
-            r'\b([a-zA-Z_][a-zA-Z0-9_]{2,25})\b',  # Variable names
+            r'\b([a-zA-Z_][a-zA-Z0-9_]{2,25})\b',
             r'name=[\'"]([a-zA-Z0-9_\-]+)[\'"]',
             r'id=[\'"]([a-zA-Z0-9_\-]+)[\'"]', 
             r'class=[\'"]([a-zA-Z0-9_\-]+)[\'"]',
             r'[\?&]([a-zA-Z0-9_\-]+)=',
-            r'data-[a-z-]+=[\'"]([a-zA-Z0-9_\-]+)[\'"]',  # Data attributes
+            r'data-[a-z-]+=[\'"]([a-zA-Z0-9_\-]+)[\'"]',
         ]
         
         for pattern in identifier_patterns:
@@ -135,36 +129,34 @@ def extract_words_from_content(content, base_url, current_path):
         web_patterns = [
             r'/(admin|api|user|auth|config|dashboard|login|register|profile|upload|download|export|import|delete|edit|create|update)[a-zA-Z0-9_\-/]*',
             r'/([a-zA-Z0-9_\-]+)\.(php|html|asp|jsp|py|js|json|xml)',
-            r'/[a-z0-9_\-]+\.[a-z]{2,4}',  # Any file with extension
-            r'/[a-z0-9_\-]+/[a-z0-9_\-]+',  # Two-level paths
-            r'/[a-z0-9_\-]+/[a-z0-9_\-]+/[a-z0-9_\-]+',  # Three-level paths
+            r'/[a-z0-9_\-]+\.[a-z]{2,4}',
+            r'/[a-z0-9_\-]+/[a-z0-9_\-]+',
+            r'/[a-z0-9_\-]+/[a-z0-9_\-]+/[a-z0-9_\-]+',
         ]
         
         for pattern in web_patterns:
             matches = re.findall(pattern, content, re.IGNORECASE)
             for match in matches:
                 if isinstance(match, tuple):
-                    match = match[0]  # Take first group
+                    match = match[0]
                 if match and len(match) > 2:
                     words.add(match)
                     
     except Exception:
         pass
     
-    # SMARTER FILTERING - LESS AGGRESSIVE
     filtered_words = set()
     common_noise = {'the', 'and', 'for', 'with', 'this', 'that', 'have', 'from', 'they', 'what'}
     
     for word in words:
         word_lower = word.lower()
-        
-        # MORE PERMISSIVE REJECTION CRITERIA
+
         reject = (
             word_lower in common_noise or
-            len(word) < 2 or len(word) > 50 or  # More permissive with length
+            len(word) < 2 or len(word) > 50 or
             word.startswith(('//', '\\', '#', 'javascript:')) or
             word.isdigit() or
-            word.count('/') > 5  # Avoid paths that are too long
+            word.count('/') > 5
         )
         
         if not reject:
@@ -172,14 +164,12 @@ def extract_words_from_content(content, base_url, current_path):
     
     return filtered_words
 
-    # LESS AGGRESSIVE FILTERING - Keep more words
     filtered_words = set()
     common_noise = {'the', 'and', 'for', 'with', 'this', 'that', 'have', 'from'}
     
     for word in words:
         word_lower = word.lower()
         
-        # Only reject obvious noise
         reject = (
             word_lower in common_noise or
             len(word) < 2 or len(word) > 40 or
@@ -192,27 +182,25 @@ def extract_words_from_content(content, base_url, current_path):
     
     return filtered_words
     
-    # BALANCED FILTERING - Keep quality but allow more finds
     filtered_words = set()
     common_noise = {'the', 'and', 'for', 'with', 'this', 'that', 'have', 'from', 'they', 'what', 'when', 'where', 'which'}
     
     for word in words:
         word_lower = word.lower()
         
-        # KEEP if it matches any of these quality patterns
         keep_patterns = [
-            '/' in word,                          # Paths
-            '_' in word,                          # IDs/variables  
-            '-' in word,                          # Kebab-case
-            word.isalnum() and len(word) > 4,     # Meaningful words
-            any(char.isdigit() for char in word), # Words with numbers
-            word_lower.startswith(('api', 'admin', 'user', 'auth', 'config')), # Common prefixes
+            '/' in word,
+            '_' in word,
+            '-' in word,
+            word.isalnum() and len(word) > 4,
+            any(char.isdigit() for char in word),
+            word_lower.startswith(('api', 'admin', 'user', 'auth', 'config')),
         ]
         
         if (word and 2 <= len(word) <= 40 and 
             not word.startswith(('//', '\\')) and
             word_lower not in common_noise and
-            any(keep_patterns)):  # At least one quality pattern
+            any(keep_patterns)):
             filtered_words.add(word)
       
     return filtered_words
@@ -229,23 +217,19 @@ def extract_js_paths(url, session, timeout):
 
         txt = r.text
 
-        # Extract candidate strings using JS_PATH_RE (strings like "/api/..." or "assets/app.js")
         paths = set(JS_PATH_RE.findall(txt))
 
-        # Also extract explicit fetch/XHR targets inside JS
         try:
             paths.update(FETCH_RE.findall(txt))
             paths.update(XHR_RE.findall(txt))
         except Exception:
             pass
 
-        # Normalize: convert relative -> absolute-like (starting with '/')
         normalized = set()
         for p in paths:
             if not p or p.lower().startswith(('javascript:', 'mailto:')):
                 continue
             if p.startswith('http://') or p.startswith('https://'):
-                # keep only same-origin absolute paths (strip host)
                 from urllib.parse import urlparse
                 parsed_base = urlparse(url)
                 parsed_p = urlparse(p)
@@ -254,7 +238,6 @@ def extract_js_paths(url, session, timeout):
             elif p.startswith('/'):
                 normalized.add(p)
             else:
-                # relative path -> prefix with '/' (we keep it as a root-anchored path)
                 normalized.add('/' + p.lstrip('/'))
         return normalized
     except Exception:
@@ -341,7 +324,7 @@ class RecursionManager:
             return False
         
         # Normalize URL to avoid duplicates
-        normalized_url = url.lower().split('?')[0]  # Ignore query parameters
+        normalized_url = url.lower().split('?')[0]
         normalized_url = normalized_url.rstrip('/')
         
         with self.lock:
@@ -363,19 +346,16 @@ class RecursionManager:
             r'url\([\'"]?([^\'")]*)[\'"]?\)'
         ]
         
-        # Extensions we DON'T want to follow (static files, etc.)
         skip_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.css', 
                           '.ico', '.svg', '.woff', '.ttf', '.pdf', '.zip']
         for pattern in patterns:
             found_links = re.findall(pattern, html_content, re.IGNORECASE)
             for link in found_links:
-                # Skip uninteresting links
                 if any(link.endswith(ext) for ext in skip_extensions):
                     continue
                 if link.startswith(('javascript:', 'mailto:', 'tel:', '#', '//')):
                     continue
                     
-                # Normalize URL
                 if link.startswith(('http://', 'https://')):
                     if base_url in link:
                         links.add(link)
@@ -384,10 +364,9 @@ class RecursionManager:
                 elif not link.startswith(('#', 'javascript:', 'mailto:')):
                     links.add(f"{base_url.rstrip('/')}/{link}")
 
-        # inline scripts: extract strings and fetch/XHR targets from inline JS
         inline_scripts = re.findall(r'<script[^>]*>(.*?)</script>', html_content, re.DOTALL | re.IGNORECASE)
         for script in inline_scripts:
-            # strings that look like paths inside inline script
+
             for p in JS_PATH_RE.findall(script):
                 if p.startswith('http://') or p.startswith('https://'):
                     if base_url in p:
@@ -397,7 +376,6 @@ class RecursionManager:
                 else:
                     links.add(f"{base_url.rstrip('/')}/{p.lstrip('/')}")
 
-            # fetch() and XHR inside inline script
             for f in FETCH_RE.findall(script):
                 if f.startswith('http://') or f.startswith('https://'):
                     if base_url in f:
@@ -423,16 +401,14 @@ class RecursionManager:
         """Add discovered links to queue for processing"""
         added_count = 0
         for link in new_links:
-            # Extract only the path part from full URL
+
             if link.startswith(('http://', 'https://')):
-                # If it's a full URL, extract the path
                 from urllib.parse import urlparse
                 parsed = urlparse(link)
                 path = parsed.path
             else:
                 path = link
             
-            # Remove leading slash if exists
             if path.startswith('/'):
                 path = path[1:]
             
@@ -471,27 +447,23 @@ class AutoFilter:
         content_hash = hash(content)
         size = len(content)
         
-        # Skip very small responses (likely empty)
         if size < 10:
             return True, "too_small"
         
-        # Set threshold based on aggressiveness level
         aggressiveness_thresholds = {
-            1: 20,  # Low: filter after 20+ repetitions
-            2: 15,  # Medium-Low: 15+ reps
-            3: 10,  # Medium: 10+ reps (default)
-            4: 7,   # Medium-High: 7+ reps
-            5: 5    # High: 5+ reps
+            1: 20,
+            2: 15,
+            3: 10,
+            4: 7,
+            5: 5
         }
         
         threshold = aggressiveness_thresholds.get(aggressiveness, 10)
         
-        # Check for duplicate responses
         if content_hash in self.seen_responses:
             count = self.seen_responses[content_hash][1] + 1
             self.seen_responses[content_hash] = (size, count)
             
-            # Only filter if we've seen this content above threshold
             if count >= threshold:
                 return True, f"common_error (seen {count} times, threshold: {threshold})"
             else:
@@ -509,7 +481,7 @@ class RecursiveLink:
     def __str__(self):
         return self.path
 
-# Interesting content patterns - the real treasure map
+# Interesting content patterns
 INTERESTING_PATTERNS = {
     'backup': [
         r'backup', r'back_up', r'bak', r'\.bak$', r'\.old$', r'\.save$',
@@ -581,7 +553,6 @@ def is_in_scope(url, scope_domain):
         url_domain = parsed_url.netloc.lower()
         scope_domain = scope_domain.lower()
         
-        # Match exact domain or subdomains
         return url_domain == scope_domain or url_domain.endswith('.' + scope_domain)
     except Exception:
         return False
@@ -599,7 +570,6 @@ def is_in_scope(url, scope_domain):
         url_domain = parsed_url.netloc.lower()
         scope_domain = scope_domain.lower()
         
-        # Match exact domain or subdomains
         return url_domain == scope_domain or url_domain.endswith('.' + scope_domain)
     except Exception:
         return False
@@ -613,7 +583,6 @@ def load_wordlist(wordlist_path):
         return None
     
     try:
-        # Try multiple encodings to avoid BOM/UTF issues (utf-8-sig handles BOM)
         encodings_to_try = ['utf-8-sig', 'utf-8', 'latin-1']
         words = None
         for enc in encodings_to_try:
@@ -652,7 +621,6 @@ def load_targets_file(targets_file):
                 print(f"{Colors.RED}[ERROR] Targets file is empty{Colors.END}")
                 return None
             
-            # Validate each target
             valid_targets = []
             for target in targets:
                 is_valid, result = validate_url(target)
@@ -689,7 +657,7 @@ def generate_all_targets(words, extensions=None):
     all_targets = []
     
     for word in words:
-        all_targets.append(word)  # Word without extension
+        all_targets.append(word)
         if extensions:
             for ext in extensions:
                 all_targets.append(f"{word}.{ext}")
@@ -727,35 +695,28 @@ def check_endpoint(target_url, word, session, timeout, args, ignore_codes=None,
         if auto_filter and args.auto_filter:
             should_filter, reason = auto_filter.should_filter(response, word, args.filter_aggressiveness)
             if should_filter:
-                # UPDATE STATISTICS
                 if stats:
                     stats['filtered_responses'] = stats.get('filtered_responses', 0) + 1
-                return  # Skip processing this response
-            
-        # If in ignore list, don't show
+                return
+
         if status in ignore_codes:
             return
-        # Apply custom ok/hide codes
         ok_codes   = parse_code_list(args.ok_codes)
         hide_codes = parse_code_list(args.hide_codes)
         if status in hide_codes:
             return
         hit = status in ok_codes
-        # Check if interesting
         is_interesting, category, confidence = is_interesting_path(word)
         
-        # Format output like dirsearch
         timestamp = format_time()
         size = format_size(len(response.content))
         path = f"/{word}"
         
         with print_lock:
-            # CI MODE: Only show interesting findings and 200s
             if args.ci:
                 if is_interesting or status == 200:
                     print(f"{timestamp} {status} - {size:>6} - {path}")
             else:
-                # NORMAL MODE: Full colored output
                 if is_interesting:
                     if confidence == "HIGH":
                         color = Colors.ORANGE
@@ -777,11 +738,9 @@ def check_endpoint(target_url, word, session, timeout, args, ignore_codes=None,
                 else:
                     print(f"{timestamp} {status} - {size:>6} - {path}")
         
-        # UPDATE STATISTICS
         if stats:
             stats['total_requests'] += 1
             stats['status_codes'][status] = stats['status_codes'].get(status, 0) + 1
-        # Also scan any response body for fetch()/XHR endpoints (useful if server returns JS without .js extension)
         if args.spa:
             try:
                 any_fetches = set(FETCH_RE.findall(response.text)) | set(XHR_RE.findall(response.text))
@@ -809,15 +768,11 @@ def check_endpoint(target_url, word, session, timeout, args, ignore_codes=None,
             if is_interesting:
                 stats['interesting_finds'][category] = stats['interesting_finds'].get(category, 0) + 1
         
-        # If SPA mode is enabled and this is HTML, extract <script src> and inline fetch/XHR references
         if args.spa and 'text/html' in response.headers.get('content-type', '').lower():
-            # find script src attributes
             script_srcs = re.findall(r'<script[^>]+src=[\'"]([^\'"]+)[\'"]', response.text, re.IGNORECASE)
             base = target_url.rstrip('/')
             for s in script_srcs:
-                # normalize to path without leading slash for queue consistency
                 if s.startswith(('http://', 'https://')):
-                    # only enqueue same-origin scripts
                     if base in s:
                         parsed = s.split('/', 3)
                         path_part = '/' + parsed[3] if len(parsed) > 3 else '/'
@@ -828,7 +783,6 @@ def check_endpoint(target_url, word, session, timeout, args, ignore_codes=None,
                     candidate = s
                 else:
                     candidate = '/' + s.lstrip('/')
-                # remove leading slash before putting in queue (main uses paths without leading slash)
                 enqueue = candidate.lstrip('/')
                 full = base + candidate
                 if enqueue and full not in seen:
@@ -836,7 +790,6 @@ def check_endpoint(target_url, word, session, timeout, args, ignore_codes=None,
                     seen.add(full)
                     stats['spa_js_paths'] = stats.get('spa_js_paths', 0) + 1
 
-            # Also check inline scripts for fetch()/XHR and add those endpoints
             inline_fetches = set(FETCH_RE.findall(response.text)) | set(XHR_RE.findall(response.text))
             for f in inline_fetches:
                 if f.startswith(('http://', 'https://')):
@@ -856,7 +809,6 @@ def check_endpoint(target_url, word, session, timeout, args, ignore_codes=None,
                     seen.add(full)
                     stats['spa_js_paths'] = stats.get('spa_js_paths', 0) + 1
 
-        # SPA mode: extract JS paths (force parse for .js)
         if args.spa and word.endswith('.js'):
             new_paths = extract_js_paths(url, session, timeout)
             base = target_url.rstrip('/')
@@ -867,10 +819,8 @@ def check_endpoint(target_url, word, session, timeout, args, ignore_codes=None,
                     seen.add(full)
                     stats['spa_js_paths'] = stats.get('spa_js_paths', 0) + 1
 
-        # WORD MINING: Extract words from HTML/JS responses
         if args.word_mine and status == 200 and len(response.content) > 0:
             try:
-                # Only process text-based responses
                 content_type = response.headers.get('content-type', '').lower()
                 if any(ct in content_type for ct in ['text/html', 'text/javascript', 'application/json', 'text/plain']):
                     
@@ -881,7 +831,6 @@ def check_endpoint(target_url, word, session, timeout, args, ignore_codes=None,
                         added_count = 0
                         
                         for mined_word in mined_words:
-                            # Skip if too long or suspicious
                             if len(mined_word) > 50 or '..' in mined_word:
                                 continue
                                 
@@ -895,61 +844,47 @@ def check_endpoint(target_url, word, session, timeout, args, ignore_codes=None,
                             with print_lock:
                                 print(f"{Colors.GREEN}[WORD-MINE] Added {added_count} words from: /{word}{Colors.END}")
                             
-                            # Update stats
                             if stats:
                                 stats['mined_words'] = stats.get('mined_words', 0) + added_count
                                 
             except Exception:
-                # Silent fail - don't break main fuzzing
                 pass
 
-        # AUTO-RECURSION: Detect directories and add to queue
         if args.auto_recurse and status in [200, 301, 302]:
-            # Initialize global set for directories if not exists
             global seen_directories
             if 'seen_directories' not in globals():
                 seen_directories = set()
                 
-            # SMARTER DIRECTORY DETECTION - MORE AGGRESSIVE FILTERING
             is_directory = False
             current_path = word.rstrip('/')
             
-            # CASE 0: EXPLICITLY SKIP FILES WITH EXTENSIONS (unless they end with /)
             has_extension = '.' in current_path.split('/')[-1] and not current_path.endswith('/')
             if has_extension:
                 is_directory = False
-            # Case 1: Explicit directory (ends with /)
             elif word.endswith('/'):
                 is_directory = True
-            # Case 2: 301/302 redirect to directory
             elif status in [301, 302] and 'Location' in response.headers:
                 location = response.headers['Location']
                 if location.endswith('/') and current_path in location:
                     is_directory = True
-            # Case 3: No file extension and reasonable path depth
             elif '.' not in current_path.split('/')[-1] and current_path.count('/') < 3:
-                # Additional check: avoid common file patterns that lack extensions
                 suspicious_files = ['Entries', 'Repository', 'Root', 'config', 'README', 'LICENSE', 'Makefile']
                 if current_path.split('/')[-1] not in suspicious_files:
                     is_directory = True
-            # Case 4: HTML content that looks like a directory listing
             elif 'text/html' in response.headers.get('content-type', '') and any(
                 pattern in response.text for pattern in ['<title>Index of', '<h1>Directory', 'Parent Directory', '[To Parent Directory]']
             ):
                 is_directory = True
             
-            # ONLY PROCESS ACTUAL DIRECTORIES AND AVOID DUPLICATES
             if is_directory and current_path not in seen_directories and target_queue:
                 seen_directories.add(current_path)
                 
                 base = target_url.rstrip('/')
                 dir_path = current_path
                 
-                # CONTEXT-AWARE PATH GENERATION
                 new_paths = []
                 dir_name = dir_path.lower().split('/')[-1]
                 
-                # BASE PATHS FOR ALL DIRECTORIES
                 base_paths = [
                     f"{dir_path}/.git", f"{dir_path}/.env", f"{dir_path}/admin", 
                     f"{dir_path}/api", f"{dir_path}/config", f"{dir_path}/backup",
@@ -957,7 +892,6 @@ def check_endpoint(target_url, word, session, timeout, args, ignore_codes=None,
                 ]
                 new_paths.extend(base_paths)
                 
-                # CONTEXT-SPECIFIC PATHS BASED ON DIRECTORY NAME
                 if 'image' in dir_name or 'picture' in dir_name or 'media' in dir_name:
                     new_paths.extend([f"{dir_path}/original", f"{dir_path}/thumbs", f"{dir_path}/large"])
                 elif 'admin' in dir_name or 'secure' in dir_name or 'control' in dir_name:
@@ -971,7 +905,6 @@ def check_endpoint(target_url, word, session, timeout, args, ignore_codes=None,
                 elif 'vendor' in dir_name:
                     new_paths.extend([f"{dir_path}/composer.json", f"{dir_path}/package.json"])
                 else:
-                    # DEFAULT PATHS FOR UNKNOWN DIRECTORIES  
                     new_paths.extend([
                         f"{dir_path}/index.php", f"{dir_path}/index.html",
                         f"{dir_path}/src", f"{dir_path}/lib", f"{dir_path}/inc"
@@ -985,29 +918,25 @@ def check_endpoint(target_url, word, session, timeout, args, ignore_codes=None,
                         seen.add(full_url)
                         added += 1
                 
-                if added > 0 and not args.ci:  # Only show in non-CI mode
+                if added > 0 and not args.ci:
                     with print_lock:
                         print(f"{Colors.CYAN}[AUTO-RECURSE] Added {added} paths inside directory: /{dir_path}{Colors.END}")
                     
-                    # Update stats
                     if stats:
                         stats['auto_recurse_paths'] = stats.get('auto_recurse_paths', 0) + added
 
-        # PROCESS RECURSION IF ACTIVE (existing functionality)
         if recursion_manager and recursion_manager.max_depth > 0:
             if status in [200, 301, 302] and 'text/html' in response.headers.get('content-type', ''):
-                # Extract links from HTML
                 new_links = recursion_manager.extract_links_from_html(response.text, target_url)
         
                 if new_links and target_queue:
-                    # Add links to queue
                     added_count = recursion_manager.process_discovered_links(
                         new_links, target_queue, current_depth
                     )
                     if added_count > 0:
                         print(f"{Colors.CYAN}[RECURSION] Depth {current_depth+1}: Added {added_count} paths from {word}{Colors.END}")
 
-        # NEW: SAVE FOR PWDOC JSON 
+        # SAVE FOR PWDOC JSON 
         if pwndoc_findings is not None and status not in ignore_codes:
             
             finding = {
@@ -1018,20 +947,16 @@ def check_endpoint(target_url, word, session, timeout, args, ignore_codes=None,
                 'timestamp': datetime.now().isoformat()
             }
             
-            # Add category if interesting
             if is_interesting:
                 finding['category'] = category
                 finding['confidence'] = confidence
                 finding['marker'] = "🔥" if confidence == "HIGH" else "⚡"
             
-            # Add to findings list
             pwndoc_findings['findings'].append(finding)
 
     except (requests.exceptions.Timeout, requests.exceptions.ConnectionError, requests.exceptions.TooManyRedirects):
-        # Silence common errors
         return
     except Exception:
-        # Silence other errors
         return
 
 def export_pwndoc_json(pwndoc_findings, output_file=None):
@@ -1048,7 +973,6 @@ def export_pwndoc_json(pwndoc_findings, output_file=None):
     
     # Convert findings to Pwndoc format
     for finding in pwndoc_findings['findings']:
-        # Determine severity based on category and status
         severity = "info"
         if finding.get('category') in ['ADMIN', 'CREDENTIALS', 'CONFIG']:
             severity = "medium" if finding['status'] in [200, 301, 302] else "info"
@@ -1061,7 +985,6 @@ def export_pwndoc_json(pwndoc_findings, output_file=None):
             'status': "open"
         }
         
-        # Add evidence if interesting
         if finding.get('category'):
             pwndoc_finding['description'] += f" - Categorized as {finding['category']} ({finding.get('confidence', 'UNKNOWN')})"
         
@@ -1085,14 +1008,11 @@ def show_summary(stats, total_time, args):
         print(f"{Colors.CYAN}[SPA] New JS routes added: {stats['spa_js_paths']}{Colors.END}")
     print(f"{Colors.MAGENTA}{'='*60}{Colors.END}")
     
-    # Basic statistics
     print(f"{Colors.CYAN}Total Requests:{Colors.END} {stats['total_requests']}")
     print(f"{Colors.CYAN}Total Time:{Colors.END} {total_time:.2f}s")
     print(f"{Colors.CYAN}Requests/sec:{Colors.END} {stats['total_requests']/total_time:.1f}")
     if args.spa and stats.get('spa_js_paths'):
         print(f"  {Colors.CYAN}SPA JS routes added: {stats['spa_js_paths']}{Colors.END}")
-    # Status codes
-    # Status codes
     print(f"\n{Colors.CYAN}Status Codes:{Colors.END}")
     for code, count in sorted(stats['status_codes'].items()):
         color = Colors.GREEN if code == 200 else Colors.YELLOW if code in [301, 302] else Colors.BLUE
@@ -1129,7 +1049,6 @@ def worker(target_url, target_queue, session, timeout, args, ignore_codes=None, 
         try:
             target = target_queue.get_nowait()
             
-            # Determine current depth if recursive
             current_depth = 0
             if recursion_manager and hasattr(target, 'depth'):
                 current_depth = target.depth
@@ -1137,16 +1056,13 @@ def worker(target_url, target_queue, session, timeout, args, ignore_codes=None, 
             else:
                 target_word = target
             
-            # Scope check - only process if in scope
             full_url = f"{target_url.rstrip('/')}/{target_word}"
             if not args.scope_lock or is_in_scope(full_url, args.scope_lock):
                 check_endpoint(target_url, target_word, session, timeout, args, ignore_codes, recursion_manager, auto_filter, current_depth, target_queue, stats, pwndoc_findings)
                 
-                # ANTI-RATE LIMITING DELAY
                 if delay > 0:
                     time.sleep(delay)
             else:
-                # Skip out-of-scope URLs silently
                 pass
                 
             target_queue.task_done()
@@ -1183,7 +1099,6 @@ def main():
     parser.add_argument('--delay', type=float, default=0, help='Delay between requests in seconds (anti-rate limiting)')
     parser.add_argument('-f', '--file', help='File with multiple targets (one per line)')
    
-   # v1.4 FEATURES
     parser.add_argument('--auto-recurse', action='store_true', help='Auto-recursion: when finding directories, fuzz inside them automatically')
     parser.add_argument('--word-mine', action='store_true', help='Word mining: extract words from HTML/JS responses and add to fuzzing queue')
     parser.add_argument('--scope-lock', help='Scope lock: only fuzz within this domain (e.g., example.com)')
@@ -1201,7 +1116,6 @@ def main():
     parser.add_argument('--format', choices=['default', 'json'], default='default', help='Output format')
     args = parser.parse_args()
     
-    # Statistics counters
     stats = {
         'total_requests': 0,
         'status_codes': {},
@@ -1213,35 +1127,29 @@ def main():
         'start_time': time.time()
     }
 
-    # Validate URL
-    # Check if we have either single target or targets file
     if not args.url and not args.file:
         print(f"{Colors.RED}[ERROR] You must specify either a target URL or a targets file with -f{Colors.END}")
         parser.print_help()
         sys.exit(1)
 
-    # Determine mode: single target vs multiple targets
     targets = []
     if args.file:
-        # Multiple targets mode
         print(f"{Colors.CYAN}[*] Multiple targets mode: {args.file}{Colors.END}")
         targets = load_targets_file(args.file)
         if not targets:
             sys.exit(1)
         print(f"{Colors.CYAN}[*] Loaded {len(targets)} valid targets{Colors.END}")
     else:
-        # Single target mode (original behavior)
+
         is_valid, result = validate_url(args.url)
         if not is_valid:
             print(result)
             sys.exit(1)
         targets = [args.url]
     
-    # SET UP AUTHENTICATION
     auth_manager = AuthManager(args)
     session = auth_manager.get_session()
     
-    # NEW: STRUCTURE FOR PWDOC JSON
     pwndoc_findings = {
         'scan_info': {
             'tool': 'hellFuzzer',
@@ -1254,46 +1162,36 @@ def main():
         'findings': []
     }
     
-    # NEW: SET UP RECURSION
     recursion_manager = RecursionManager(max_depth=args.depth)
     
-    # NEW: SET UP AUTO-FILTER
     auto_filter = AutoFilter() if args.auto_filter else None
     
-    # Test authentication if configured
     if any([args.auth_basic, args.auth_jwt, args.auth_oauth2, args.auth_header]):
         auth_ok, auth_msg = auth_manager.test_auth(args.url)
         print(auth_msg)
         if not auth_ok and "401" in auth_msg:
             print(f"{Colors.YELLOW}Check your credentials/token{Colors.END}")
     
-    # Set up Ctrl+C handler
     try:
         import signal
         signal.signal(signal.SIGINT, signal_handler)
     except ImportError:
         pass
     
-    # Parse cookies if provided
     cookies_dict = parse_cookies(args.cookies) if args.cookies else {}
     
-    # Load wordlist
     print(f"{Colors.CYAN}[*] Loading wordlist: {args.wordlist}{Colors.END}")
     words = load_wordlist(args.wordlist)
     if not words:
         sys.exit(1)
 
-    # --- ensure common entry files are present for SPA discovery ---
     common_entries = ['index.html', 'index.php', 'main.js', 'app.js', 'bundle.js', 'app.min.js']
     for ce in common_entries:
         if ce not in words:
             words.append(ce)
-    # --------------------------------------------------------------
 
-    # Generate ALL targets
     all_targets = generate_all_targets(words, args.extensions)
     
-    # Show configuration
     print(f"{Colors.CYAN}[*] Target: {args.url}{Colors.END}")
     print(f"{Colors.CYAN}[*] Threads: {args.threads}{Colors.END}")
     print(f"{Colors.CYAN}[*] Timeout: {args.timeout}s{Colors.END}")
@@ -1313,11 +1211,10 @@ def main():
     start_time = time.time()
 
     try:
-        # Loop for multiple targets
+
         for target_url in targets:
             print(f"{Colors.MAGENTA}[*] Scanning: {target_url}{Colors.END}")
 
-            # Reset stats for each target
             target_stats = {
                 'total_requests': 0,
                 'status_codes': {},
@@ -1325,10 +1222,8 @@ def main():
                 'recursion_discovered': 0
             }
 
-            # Reset recursion manager for each target
             recursion_manager = RecursionManager(max_depth=args.depth)
 
-            # Reset Pwndoc findings for each target
             pwndoc_findings = {
                 'scan_info': {
                     'tool': 'hellFuzzer',
@@ -1341,17 +1236,13 @@ def main():
                 'findings': []
             }
 
-            # --- ensure module-level seen is available for threads and check_endpoint ---
             global seen
-            seen = set()          # for SPA mode
-            # --------------------------------------------------------------------------
-
-            # Try one initial GET to root to grab index.html and script srcs (helps SPA discovery)
+            seen = set()          
             if args.spa:
                 try:
                     r_root = session.get(target_url.rstrip('/') + '/', timeout=args.timeout, allow_redirects=True)
                     if r_root.status_code == 200 and 'text/html' in r_root.headers.get('content-type',''):
-                        # extract scripts and add to words if not already present
+
                         script_srcs = re.findall(r'<script[^>]+src=[\'"]([^\'"]+)[\'"]', r_root.text, re.IGNORECASE)
                         for s in script_srcs:
                             s_norm = s.lstrip('/')
@@ -1360,12 +1251,10 @@ def main():
                 except Exception:
                     pass
 
-            # Create queue and add ALL individual targets
             target_queue = queue.Queue()
             for target in all_targets:
                 target_queue.put(target)
 
-            # Create and launch threads
             threads = []
             for _ in range(args.threads):
                 thread = threading.Thread(
@@ -1376,17 +1265,15 @@ def main():
                 thread.start()
                 threads.append(thread)
 
-            # Show progress
             initial_size = target_queue.qsize()
             if initial_size == 0:
-                initial_size = 1        # avoid ZeroDivision
+                initial_size = 1
             last_update = time.time()
 
             while any(thread.is_alive() for thread in threads):
                 remaining = target_queue.qsize()
                 completed = initial_size - remaining
 
-                # Update progress every 0.5 seconds (but not in CI mode)
                 if not args.ci and time.time() - last_update > 0.5:
                     progress = (completed / initial_size) * 100
                     rps = completed / (time.time() - start_time) if (time.time() - start_time) > 0 else 0
@@ -1396,14 +1283,12 @@ def main():
 
                 time.sleep(0.1)
 
-            print()  # New line after progress
+            print()
 
-            # Show summary for this target
             target_total_time = time.time() - start_time
             target_stats['total_requests'] = len(all_targets)
             show_summary(target_stats, target_total_time, args)
 
-            # Export JSON for this target if requested
             if args.format == 'json':
                 safe_target = target_url.replace('://', '_').replace('/', '_').replace(':', '_')
                 output_file = f"hellfuzzer_scan_{safe_target}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
@@ -1414,7 +1299,6 @@ def main():
     except KeyboardInterrupt:
         print(f"\n{Colors.RED}[!] Scan interrupted by user{Colors.END}")
 
-    # Final summary for multiple targets
     if len(targets) > 1:
         total_time = time.time() - start_time
         print(f"{Colors.MAGENTA}[*] All targets completed in {total_time:.2f} seconds{Colors.END}")

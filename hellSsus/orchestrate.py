@@ -10,7 +10,6 @@ import traceback
 import sqlite3 
 import re
 
-# Import new logging and error handling
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import hellconfig
@@ -35,7 +34,6 @@ HELLFUZZER_PATH = hellconfig.HELLFUZZER_PATH
 get_scan_path = hellconfig.get_scan_path
 get_latest_scan = hellconfig.get_latest_scan
 
-# Alias for backward compatibility
 robust_scan = log_execution(log_args=True, log_time=True)
 
 # Setup logging
@@ -45,7 +43,6 @@ setup_application_logging()
 @validate_target_url
 def run_hellrecon(target, output_file):
     """Run HellRecon with improved error handling"""
-    # ENSURE output_file is an absolute path to avoid HellRecon saving it in its own directory
     output_file = os.path.abspath(output_file)
 
     cmd = [
@@ -58,12 +55,11 @@ def run_hellrecon(target, output_file):
     orchestrate_logger.info(f"Running HellRecon: {' '.join(cmd)}")
     
     try:
-        # Run with timeout
         result = subprocess.run(
             cmd, 
             stdout=subprocess.DEVNULL, 
             stderr=subprocess.PIPE,
-            timeout=300,  # 5 minute timeout
+            timeout=300,
             env={**os.environ, 'PYTHONIOENCODING': 'utf-8'} 
         )
         
@@ -96,7 +92,6 @@ def run_hellfuzzer(target, output_file, wordlist="common.txt"):
         orchestrate_logger.error(f"Wordlist not found: {wordlist_path}")
         return None
     
-    # Command WITHOUT --silent flag
     cmd = [
         sys.executable, HELLFUZZER_PATH,
         target,
@@ -108,7 +103,6 @@ def run_hellfuzzer(target, output_file, wordlist="common.txt"):
     orchestrate_logger.info(f"Running HellFuzzer: {' '.join(cmd)}")
     
     try:
-        # Run process
         result = subprocess.run(
             cmd, 
             capture_output=True, 
@@ -117,7 +111,6 @@ def run_hellfuzzer(target, output_file, wordlist="common.txt"):
             timeout=120
         )
 
-        # IMPROVED: Search in both stdout and stderr, case-insensitive
         json_match = re.search(r'\[JSON\].*exported to ([\w\.\-_]+\.json)', 
                                result.stdout + result.stderr, 
                                re.IGNORECASE)
@@ -126,12 +119,11 @@ def run_hellfuzzer(target, output_file, wordlist="common.txt"):
             json_filename = json_match.group(1)
             orchestrate_logger.info(f"HellFuzzer created JSON file: {json_filename}")
             
-            # First, try to find the file in the current working directory
             possible_paths = [
-                os.path.join(os.getcwd(), json_filename),          # Current directory
-                os.path.join(os.path.dirname(HELLFUZZER_PATH), json_filename),  # Tool directory
-                os.path.join(SCANS_DIR, json_filename),            # Shared scans directory
-                os.path.join(os.path.dirname(__file__), json_filename)  # Orchestrator directory
+                os.path.join(os.getcwd(), json_filename),
+                os.path.join(os.path.dirname(HELLFUZZER_PATH), json_filename),
+                os.path.join(SCANS_DIR, json_filename),
+                os.path.join(os.path.dirname(__file__), json_filename)
             ]
             
             json_found_path = None
@@ -141,7 +133,6 @@ def run_hellfuzzer(target, output_file, wordlist="common.txt"):
                     break
             
             if json_found_path:
-                # Copy the found JSON to the designated output location
                 import shutil
                 try:
                     shutil.copy2(json_found_path, output_file)
@@ -189,7 +180,7 @@ def run_hellscanner(target, output_file, project_name, project_id):
             hellscanner_cmd, 
             capture_output=True, 
             text=True,
-            timeout=300  # 5 minute timeout
+            timeout=300
         )
         
         orchestrate_logger.info(f"HellScanner stdout: {result.stdout[:500]}...")
@@ -230,17 +221,14 @@ def run_nucleiscanner(target, output_file, project_id):
     try:
         orchestrate_logger.info(f"Running Nuclei scanner for project ID: {project_id}")
         
-        # Import here to avoid circular imports
         from nucleiscanner import run_nuclei_scan
         
-        # Run the scan
         result = run_nuclei_scan(target, output_file)
         
         if result.get('status') == 'success':
             findings_count = result.get('findings_count', 0)
             orchestrate_logger.info(f"Nuclei completed. Findings: {findings_count}")
             
-            # Return the actual output file path
             return result.get('output_file')
         else:
             error_msg = result.get('error', 'Unknown error')
@@ -253,14 +241,13 @@ def run_nucleiscanner(target, output_file, project_id):
         return None
 
 @log_execution(log_args=True)
-@cached(ttl=300)  # Cache project lookup for 5 minutes
+@cached(ttl=300)
 def get_or_create_project(project_name):
     """Get existing project or create new one with caching"""
     try:
         from integrations.hellrecon_adapter import HellReconAdapter
         adapter = HellReconAdapter()
         
-        # Check if it already exists
         conn = adapter.connect_db()
         if not conn:
             orchestrate_logger.error("Failed to connect to database")
@@ -297,7 +284,6 @@ def import_tool_results(tool_name, target, output_file, project_id):
             success = adapter.import_scan(output_file, project_id=project_id)
             
         elif tool_name == "hellfuzzer":
-            # Dynamic import for HellFuzzer
             import importlib.util
             adapter_path = os.path.join(os.path.dirname(__file__), 'integrations', 'hellfuzzer_adapter.py')
             spec = importlib.util.spec_from_file_location("hellfuzzer_adapter", adapter_path)
@@ -460,7 +446,6 @@ def main():
             else:
                 orchestrate_logger.error("Nuclei scanner failed to execute")
     
-    # Summary
     orchestrate_logger.info(f"HellSuite scan completed: {tools_success}/{tools_run} tools succeeded")
     if tools_success > 0:
         orchestrate_logger.info(f"Project ID: {project_id} - Data available in dashboard")
