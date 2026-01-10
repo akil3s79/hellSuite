@@ -7,3 +7,4 @@ Werkzeug==2.3.7
 Jinja2==3.1.2
 click==8.1.7
 itsdangerous==2.1.2
+urllib3>=2.6.3 # not directly required, pinned by Snyk to avoid a vulnerability
